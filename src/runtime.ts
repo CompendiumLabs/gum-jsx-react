@@ -5,6 +5,7 @@ import {
   Svg,
   exact,
   make_request,
+  px,
   render_svg,
 } from '@gum-jsx/core'
 
@@ -119,9 +120,8 @@ function toGumChild(child: GumHostChild, container: GumContainer): GumElement | 
 }
 
 function viewportRequest(size: GumContainer['size']) {
-  const [width, height] = typeof size === 'number' ? [size, size]
-    : 'width' in size ? [size.width, size.height]
-    : size
+  if (typeof size === 'number') return make_request()
+  const [width, height] = 'width' in size ? [size.width, size.height] : size
   return make_request({ width: exact(width), height: exact(height) })
 }
 
@@ -131,7 +131,10 @@ export function renderContainer(container: GumContainer): void {
     .filter((child): child is GumElement => child instanceof GumElement)
   const content = children.length === 1 ? children[0] : new Group({ children })
   const props = toGumProps((container.props ?? {}) as GumHostProps, container)
-  const viewport = new Svg({ ...props, theme: container.theme, children: content })
+  const bounds = typeof container.size === 'number'
+    ? { max_width: px(container.size), max_height: px(container.size) }
+    : {}
+  const viewport = new Svg({ ...props, ...bounds, theme: container.theme, children: content })
   container.pass.set_resource('fonts', container.fonts, container.fonts.version ?? 0)
   const fragment = container.pass.layout(viewport, viewportRequest(container.size))
   const svg = render_svg(fragment)

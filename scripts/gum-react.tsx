@@ -137,7 +137,7 @@ async function loadComponent(input: string, cwd?: string): Promise<LoadedCompone
 async function main() {
   program
     .argument('<component>', 'path to a component .tsx file')
-    .option('-s, --size <pixels>', 'square SVG size', parseSize, 500)
+    .option('-s, --size <pixels>', 'maximum SVG dimension', parseSize, 500)
     .option('-t, --theme <theme>', 'color theme (light or dark)', parseTheme, 'light')
     .option('-c, --cwd <dir>', 'base directory for relative ?raw imports')
     .parse()

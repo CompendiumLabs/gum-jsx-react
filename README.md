@@ -36,6 +36,10 @@ root.render(<Scene />)
 console.log(root.getSvg())
 ```
 
+A numeric `size` is the maximum extent on either axis, so aspect-aware content
+fits within that bound. Pass `[width, height]` or `{ width, height }` for exact
+viewport dimensions.
+
 `GUM` includes the core and math element classes. Wrap an application-defined element class with `createGumComponent`, or pass a named `elements` registry to a root.
 
 The `gum-react` command renders a default-exported component to SVG:
@@ -43,3 +47,5 @@ The `gum-react` command renders a default-exported component to SVG:
 ```sh
 bun gum-react figure.tsx --size 800 --theme dark > figure.svg
 ```
+
+The CLI's numeric `--size` likewise sets the maximum output dimension.

@@ -10,7 +10,7 @@ import Scene from '../test/component'
 
 const ROOT = resolve(import.meta.dir, '..')
 const CLI = './scripts/gum-react.tsx'
-const { Circle, Field, Latex, Text } = GUM
+const { Circle, Field, Latex, Plot, Text } = GUM
 
 function runCli(args: string[]) {
   return spawnSync(process.execPath, [CLI, ...args], { cwd: ROOT, encoding: 'utf-8' })
@@ -56,6 +56,22 @@ function assertUpdates() {
   assert.deepEqual(root.getSize(), { width: 160, height: 90 })
 }
 
+function assertNumericSize() {
+  const root = createGumRoot({ size: 300 })
+  root.render(<Plot aspect={1.5} />)
+  assert.deepEqual(root.getSize(), { width: 300, height: 200 })
+
+  root.setSize(150)
+  assert.deepEqual(root.getSize(), { width: 150, height: 100 })
+
+  root.setSize([300, 300])
+  assert.deepEqual(root.getSize(), { width: 300, height: 300 })
+
+  root.setSize(300)
+  root.render(<Circle width={px(400)} height={px(200)} />)
+  assert.deepEqual(root.getSize(), { width: 300, height: 200 })
+}
+
 function assertCustomElements() {
   class CustomCircle extends GumCircle {}
   const Custom = createGumComponent(CustomCircle)
@@ -72,7 +88,11 @@ function assertCli() {
   const result = runCli(['test/component.tsx', '--size', '320'])
   assert.equal(result.status, 0, result.stderr || result.stdout)
   assert.ok(result.stdout.startsWith('<svg'))
-  assert.ok(result.stdout.includes('width="320"'))
+  const viewport = result.stdout.match(/^<svg\b[^>]*>/)?.[0] ?? ''
+  const width = Number(viewport.match(/\bwidth="([^"]+)"/)?.[1])
+  const height = Number(viewport.match(/\bheight="([^"]+)"/)?.[1])
+  assert.equal(width, 320)
+  assert.ok(Math.abs(width / height - 1.5) < 1e-12)
 
   const dir = mkdtempSync(join(tmpdir(), 'gum-react-raw-'))
   try {
@@ -90,7 +110,8 @@ function assertCli() {
   }
 }
 
-for (const test of [assertPrimitives, assertRendering, assertUpdates, assertCustomElements, assertCli]) {
+for (const test of [assertPrimitives, assertRendering, assertUpdates, assertNumericSize,
+  assertCustomElements, assertCli]) {
   test()
   console.log(`ok — ${test.name}`)
 }

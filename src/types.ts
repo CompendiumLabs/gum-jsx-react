@@ -2,6 +2,7 @@ import type { Element, FontProvider, Fonts, Size, ThemeName } from '@gum-jsx/cor
 import type { LayoutPass } from '@gum-jsx/core'
 
 export type GumHostType = `gum.${string}`
+// A scalar is the maximum extent on either axis; pairs are exact dimensions.
 export type GumSize = number | Size | readonly [width: number, height: number]
 export type GumElementConstructor<Props extends object = Record<string, unknown>> =
   new (...args: any[]) => Element
