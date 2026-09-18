@@ -40,6 +40,28 @@ A numeric `size` is the maximum extent on either axis, so aspect-aware content
 fits within that bound. Pass `[width, height]` or `{ width, height }` for exact
 viewport dimensions.
 
+## Fonts and emoji
+
+Text is outlined, so figures need no page fonts. Emoji are the exception: core
+measures them with a bundled metrics face and keeps them as live SVG text in the
+family `Noto Color Emoji`. `<Gum>` renders inline, so the page's own `@font-face`
+rule paints them. Without one, the viewer's emoji font is used, with each emoji
+centered in its measured advance.
+
+```css
+@font-face {
+  font-family: 'Noto Color Emoji';
+  src: url('@fontsource/noto-color-emoji/files/noto-color-emoji-emoji-400-normal.woff2') format('woff2');
+}
+```
+
+Use that complete file. The package's unicode-range slices are OpenType-SVG only,
+which Chrome does not paint. Keep the family out of the page's own font stacks, and
+the browser fetches it only once a figure contains an emoji.
+
+A custom `fonts` value is an effect dependency of `<Gum>`. Create it once, outside
+the component or in `useMemo`, or every render rebuilds the root and reloads fonts.
+
 `GUM` includes the core and math element classes. Wrap an application-defined element class with `createGumComponent`, or pass a named `elements` registry to a root.
 
 The `gum-react` command renders a default-exported component to SVG:
