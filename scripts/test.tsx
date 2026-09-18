@@ -72,6 +72,19 @@ function assertNumericSize() {
   assert.deepEqual(root.getSize(), { width: 300, height: 200 })
 }
 
+function assertUniqueDefinitionIds() {
+  const first = createGumRoot({ size: 100 })
+  const second = createGumRoot({ size: 100 })
+  first.render(<Circle />)
+  second.render(<Circle />)
+
+  const firstClip = first.getSvg().match(/<clipPath id="([^"]+)"/)?.[1]
+  const secondClip = second.getSvg().match(/<clipPath id="([^"]+)"/)?.[1]
+  assert.ok(firstClip)
+  assert.ok(secondClip)
+  assert.notEqual(firstClip, secondClip, 'separate React roots must not collide in one document')
+}
+
 function assertCustomElements() {
   class CustomCircle extends GumCircle {}
   const Custom = createGumComponent(CustomCircle)
@@ -111,7 +124,7 @@ function assertCli() {
 }
 
 for (const test of [assertPrimitives, assertRendering, assertUpdates, assertNumericSize,
-  assertCustomElements, assertCli]) {
+  assertUniqueDefinitionIds, assertCustomElements, assertCli]) {
   test()
   console.log(`ok — ${test.name}`)
 }

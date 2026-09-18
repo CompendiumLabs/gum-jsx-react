@@ -31,6 +31,7 @@ export interface GumHostInstance {
 export type GumHostChild = GumHostInstance | GumHostText
 
 export interface GumContainer {
+  idPrefix: string
   size: GumSize
   theme?: ThemeName
   elements?: GumElementRegistry

@@ -2,12 +2,12 @@ import { Children, type ReactElement, type ReactNode } from 'react'
 import {
   Element as GumElement,
   Group,
-  Svg,
   exact,
   make_request,
   px,
-  render_svg,
+  render_element,
 } from '@gum-jsx/core'
+import type { SvgProps } from '@gum-jsx/core'
 
 import { DEFAULT_ELEMENTS } from './elements'
 import { GUM_CONSTRUCTOR_PROP } from './primitives'
@@ -134,11 +134,16 @@ export function renderContainer(container: GumContainer): void {
   const bounds = typeof container.size === 'number'
     ? { max_width: px(container.size), max_height: px(container.size) }
     : {}
-  const viewport = new Svg({ ...props, ...bounds, theme: container.theme, children: content })
-  container.pass.set_resource('fonts', container.fonts, container.fonts.version ?? 0)
-  const fragment = container.pass.layout(viewport, viewportRequest(container.size))
-  const svg = render_svg(fragment)
+  // Root props, bounds, and the container theme win over a source Svg's own props.
+  // The shared pass keeps its cache; fonts loaded since the last render refresh it.
+  const { svg, size } = render_element(content, {
+    request: viewportRequest(container.size),
+    overrides: { ...props, ...bounds, theme: container.theme } as SvgProps,
+    id_prefix: container.idPrefix,
+    pass: container.pass,
+    fonts: container.fonts,
+  })
   container.currentSvg = svg
-  container.currentSize = fragment.size
+  container.currentSize = size
   container.onRender?.(svg)
 }

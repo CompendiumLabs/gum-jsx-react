@@ -19,6 +19,7 @@ import type {
 
 const DEFAULT_EVENT_PRIORITY = 0
 let currentUpdatePriority = DEFAULT_EVENT_PRIORITY
+let nextRootId = 0
 const HOST_CONTEXT = {}
 const NOOP = () => {}
 
@@ -205,6 +206,7 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     onRender,
   } = options
   const container: GumContainer = {
+    idPrefix: `gum-react-${nextRootId++}`,
     size, theme, elements, fonts,
     pass: new LayoutPass({ fonts: { value: fonts, version: fonts.version ?? 0 } }),
     props,
