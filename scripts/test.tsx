@@ -69,7 +69,11 @@ function assertNumericSize() {
 
   root.setSize(300)
   root.render(<Circle width={px(400)} height={px(200)} />)
-  assert.deepEqual(root.getSize(), { width: 300, height: 200 })
+  assert.deepEqual(root.getSize(), { width: 300, height: 150 })
+  assert.ok(root.getSvg().includes('matrix(0.75 0 0 0.75 0 0)'))
+
+  root.render(<Circle width={px(200)} height={px(400)} />)
+  assert.deepEqual(root.getSize(), { width: 150, height: 300 })
 }
 
 function assertUniqueDefinitionIds() {

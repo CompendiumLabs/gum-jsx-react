@@ -36,9 +36,10 @@ root.render(<Scene />)
 console.log(root.getSvg())
 ```
 
-A numeric `size` is the maximum extent on either axis, so aspect-aware content
-fits within that bound. Pass `[width, height]` or `{ width, height }` for exact
-viewport dimensions.
+A numeric `size` is the maximum extent on either axis. Content reflows within
+those offers, then the completed figure scales down uniformly if necessary,
+including both dimensions, fonts, and strokes. Pass `[width, height]` or
+`{ width, height }` for exact viewport dimensions instead.
 
 ## Fonts and emoji
 
