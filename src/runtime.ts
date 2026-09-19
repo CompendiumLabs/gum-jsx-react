@@ -69,15 +69,28 @@ function reactElementToGum(element: ReactElement, container: GumContainer): GumE
   return new constructor(args)
 }
 
-function ensureReactConvert<T>(value: T | ReactElement, container: GumContainer): T | GumElement | null {
-  return isReactElement(value) ? reactElementToGum(value, container) : value
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value == null || typeof value !== 'object') return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === Object.prototype || proto === null
 }
 
+// Props such as ticks and legends nest elements inside arrays and records.
+// Untouched data keeps its identity, so lengths and plain values pass through as-is.
 function toGumValue(value: unknown, container: GumContainer): unknown {
   if (typeof value === 'function') {
-    return (...args: unknown[]) => ensureReactConvert((value as Function)(...args), container)
+    return (...args: unknown[]) => toGumValue((value as Function)(...args), container)
   }
-  return ensureReactConvert(value, container)
+  if (isReactElement(value)) return reactElementToGum(value, container)
+  if (Array.isArray(value)) {
+    const items = value.map(item => toGumValue(item, container))
+    return items.some((item, i) => item !== value[i]) ? items : value
+  }
+  if (isPlainObject(value)) {
+    const entries = Object.entries(value).map(([key, item]) => [key, toGumValue(item, container)] as const)
+    return entries.some(([key, item]) => item !== value[key]) ? Object.fromEntries(entries) : value
+  }
+  return value
 }
 
 function toGumKey(key: string): string {
