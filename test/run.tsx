@@ -109,7 +109,8 @@ function assertCli() {
   const width = Number(viewport.match(/\bwidth="([^"]+)"/)?.[1])
   const height = Number(viewport.match(/\bheight="([^"]+)"/)?.[1])
   assert.equal(width, 320)
-  assert.ok(Math.abs(width / height - 1.5) < 1e-12)
+  // The SVG serializer rounds output to ten significant digits.
+  assert.ok(Math.abs(height - width / 1.5) < 1e-7)
 
   const dir = mkdtempSync(join(tmpdir(), 'gum-react-raw-'))
   try {
