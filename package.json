@@ -14,7 +14,7 @@
   },
   "scripts": {
     "gum-react": "bun scripts/gum-react.tsx",
-    "test": "bun scripts/test.tsx",
+    "test": "bun test/run.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

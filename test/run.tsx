@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path'
 
 import { Circle as GumCircle, px } from '@gum-jsx/core'
 import { createGumComponent, createGumRoot, GUM } from '../src/index'
-import Scene from '../test/component'
+import Scene from './component'
 
 const ROOT = resolve(import.meta.dir, '..')
 const CLI = './scripts/gum-react.tsx'
