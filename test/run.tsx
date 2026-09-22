@@ -5,19 +5,26 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 import { Circle as GumCircle, px } from '@gum-jsx/core'
+import * as core from '@gum-jsx/core'
+import * as math from '@gum-jsx/math'
 import { createGumComponent, createGumRoot, GUM } from '../src/index'
 import Scene from './component'
 
 const ROOT = resolve(import.meta.dir, '..')
 const CLI = './scripts/gum-react.tsx'
-const { Circle, Field, Latex, Plot, Text } = GUM
+const { Circle, Field, Latex, Legend, LegendItem, MathChoice, MathText, Plot, Text } = GUM
 
 function runCli(args: string[]) {
   return spawnSync(process.execPath, [CLI, ...args], { cwd: ROOT, encoding: 'utf-8' })
 }
 
 function assertPrimitives() {
-  assert.ok(Object.keys(GUM).length > 0)
+  const elements = Object.entries({ ...core, ...math })
+    .filter(([, value]) => typeof value === 'function'
+      && value.prototype instanceof core.Element && value !== math.MathElement)
+    .map(([name]) => name)
+  assert.deepEqual(Object.keys(GUM).sort(), elements.sort(),
+    'GUM must include every public concrete core and math element')
   assert.equal(typeof Circle, 'function')
   assert.equal(typeof Latex, 'function')
   assert.ok('MathRow' in GUM)
@@ -43,6 +50,28 @@ function assertRendering() {
     />,
   )
   assert.ok(root.getSvg().includes('fill="red"'), 'React elements returned by callbacks should convert')
+
+  root.render(
+    <Legend>
+      <LegendItem badge_color="red" kind="bar">Observed</LegendItem>
+      <LegendItem badge_color="blue">Predicted</LegendItem>
+    </Legend>,
+  )
+  assert.ok(root.getSvg().includes('fill="red"'), 'legend items should render bar badges')
+  assert.ok(root.getSvg().includes('stroke="blue"'), 'legend items should render line badges')
+
+  root.render(
+    <MathText style="script">
+      <MathChoice>
+        <MathText color="red">D</MathText>
+        <MathText color="blue">T</MathText>
+        <MathText color="green">S</MathText>
+        <MathText color="purple">Q</MathText>
+      </MathChoice>
+    </MathText>,
+  )
+  assert.ok(root.getSvg().includes('fill="green"'), 'math choices should select the script branch')
+  assert.ok(!/fill="(?:red|blue|purple)"/.test(root.getSvg()), 'unselected math branches should not render')
   root.unmount()
 }
 
