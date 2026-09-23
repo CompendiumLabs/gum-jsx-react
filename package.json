@@ -7,7 +7,6 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "private": true,
   "license": "MIT",
   "bin": {
     "gum-react": "scripts/gum-react.tsx"
@@ -35,5 +34,27 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^7"
-  }
+  },
+  "version": "2.0.0-beta.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CompendiumLabs/gum-jsx-react.git"
+  },
+  "homepage": "https://github.com/CompendiumLabs/gum-jsx-react#readme",
+  "bugs": {
+    "url": "https://github.com/CompendiumLabs/gum-jsx-react/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE",
+    "scripts/gum-react.tsx"
+  ]
 }

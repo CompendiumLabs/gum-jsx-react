@@ -2,13 +2,19 @@
 
 React bindings for [gum-jsx](https://github.com/CompendiumLabs/gum-jsx). The package provides a custom renderer for headless SVG generation and a `<Gum>` component for React DOM applications.
 
+See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for workspace
+setup. Run `bun install` at the workspace root; this package expects the React
+and React DOM versions declared in its [peer dependencies](./package.json).
+
+## React DOM
+
 ```tsx
 import { px } from '@gum-jsx/core'
 import { createGumRoot, Gum, GUM } from '@gum-jsx/react'
 
 const { Circle, HStack, Rect, Text } = GUM
 
-export function Scene() {
+export default function Scene() {
   return (
     <HStack gap={px(20)}>
       <Rect fill="blue" />
@@ -27,13 +33,20 @@ export function Figure() {
 }
 ```
 
-For headless rendering, create a root directly:
+The `GUM` components belong inside `<Gum>` or a Gum root. They describe Gum
+elements through the custom renderer. Use underscore prop names such as
+`font_size` and `stroke_width` in React TSX.
+
+## Headless SVG
+
+Using `Scene` from the example above, create a root directly:
 
 ```tsx
 const root = createGumRoot({ size: [640, 360], theme: 'dark' })
 await root.loadFonts()
 root.render(<Scene />)
 console.log(root.getSvg())
+root.unmount()
 ```
 
 A numeric `size` is the maximum extent on either axis. Content reflows within
@@ -65,10 +78,20 @@ the component or in `useMemo`, or every render rebuilds the root and reloads fon
 
 `GUM` includes the core and math element classes. Wrap an application-defined element class with `createGumComponent`, or pass a named `elements` registry to a root.
 
-The `gum-react` command renders a default-exported component to SVG:
+## Command line
+
+Save the first example as `figure.tsx` in the workspace root. The `gum-react`
+command renders its default-exported `Scene` component to SVG:
 
 ```sh
-bun gum-react figure.tsx --size 800 --theme dark > figure.svg
+bun run --silent --cwd gum-jsx-react gum-react ../figure.tsx --size 800 --theme dark > figure.svg
 ```
 
 The CLI's numeric `--size` likewise sets the maximum output dimension.
+It accepts `--cwd` to choose the base directory for relative
+`?raw` imports and passes the selected `theme` to the exported component.
+
+## Development
+
+Run `bun run test` and `bun run typecheck` from this package directory after
+installing workspace dependencies.
