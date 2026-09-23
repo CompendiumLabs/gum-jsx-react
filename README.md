@@ -2,9 +2,9 @@
 
 React bindings for [gum-jsx](https://github.com/CompendiumLabs/gum-jsx). The package provides a custom renderer for headless SVG generation and a `<Gum>` component for React DOM applications.
 
-See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for workspace
-setup. Run `bun install` at the workspace root; this package expects the React
-and React DOM versions declared in its [peer dependencies](./package.json).
+See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for
+getting started and the package overview. Compatible React and React DOM versions
+are listed in the [peer dependencies](./package.json).
 
 ## React DOM
 
@@ -80,11 +80,11 @@ the component or in `useMemo`, or every render rebuilds the root and reloads fon
 
 ## Command line
 
-Save the first example as `figure.tsx` in the workspace root. The `gum-react`
-command renders its default-exported `Scene` component to SVG:
+Save the first example as `figure.tsx`. The `gum-react` command renders its
+default-exported `Scene` component to SVG.
 
 ```sh
-bun run --silent --cwd gum-jsx-react gum-react ../figure.tsx --size 800 --theme dark > figure.svg
+bun run --silent gum-react figure.tsx --size 800 --theme dark > figure.svg
 ```
 
 The CLI's numeric `--size` likewise sets the maximum output dimension.
@@ -93,5 +93,4 @@ It accepts `--cwd` to choose the base directory for relative
 
 ## Development
 
-Run `bun run test` and `bun run typecheck` from this package directory after
-installing workspace dependencies.
+Run `bun run test` and `bun run typecheck` from this package directory.
