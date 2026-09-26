@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path'
 import { Circle as GumCircle, px } from '@gum-jsx/core'
 import * as core from '@gum-jsx/core'
 import * as math from '@gum-jsx/math'
+import * as maps from '@gum-jsx/maps'
 import { createGumComponent, createGumRoot, GUM } from '../src/index'
 import Scene from './component'
 
@@ -19,12 +20,12 @@ function runCli(args: string[]) {
 }
 
 function assertPrimitives() {
-  const elements = Object.entries({ ...core, ...math })
+  const elements = Object.entries({ ...core, ...math, ...maps })
     .filter(([, value]) => typeof value === 'function'
       && value.prototype instanceof core.Element && value !== math.MathElement)
     .map(([name]) => name)
   assert.deepEqual(Object.keys(GUM).sort(), elements.sort(),
-    'GUM must include every public concrete core and math element')
+    'GUM must include every public concrete core, math, and maps element')
   assert.equal(typeof Circle, 'function')
   assert.equal(typeof Latex, 'function')
   assert.ok('MathRow' in GUM)
@@ -83,6 +84,26 @@ function assertUpdates() {
   assert.notEqual(root.getSvg(), light)
   root.setSize({ width: 160, height: 90 })
   assert.deepEqual(root.getSize(), { width: 160, height: 90 })
+}
+
+function assertMaps() {
+  const root = createGumRoot({ size: [400, 240] })
+  root.render(
+    <GUM.GeoMap
+      source={maps.world_countries({ ids: ['840'] })}
+      styles={() => ({ fill: 'red' })}
+    >
+      <GUM.Points points={[[-74.01, 40.71]]} point_size={px(8)} fill="blue" />
+    </GUM.GeoMap>,
+  )
+  const world = root.getSvg()
+  assert.ok(world.includes('<path') && world.includes('fill="red"'), 'map features should render')
+  assert.ok(world.includes('fill="blue"'), 'React children should render in the map projection')
+
+  root.render(<GUM.GeoMap source={maps.us_states()} projection="albersUsa" />)
+  assert.notEqual(root.getSvg(), world, 'map source and projection updates should render')
+  assert.ok(root.getSvg().includes('<path'))
+  root.unmount()
 }
 
 function assertNumericSize() {
@@ -157,7 +178,7 @@ function assertCli() {
   }
 }
 
-for (const test of [assertPrimitives, assertRendering, assertUpdates, assertNumericSize,
+for (const test of [assertPrimitives, assertRendering, assertUpdates, assertMaps, assertNumericSize,
   assertUniqueDefinitionIds, assertCustomElements, assertCli]) {
   test()
   console.log(`ok — ${test.name}`)

@@ -76,7 +76,10 @@ the browser fetches it only once a figure contains an emoji.
 A custom `fonts` value is an effect dependency of `<Gum>`. Create it once, outside
 the component or in `useMemo`, or every render rebuilds the root and reloads fonts.
 
-`GUM` includes the core and math element classes. Wrap an application-defined element class with `createGumComponent`, or pass a named `elements` registry to a root.
+`GUM` includes the core and math element classes and `GUM.GeoMap` from
+`@gum-jsx/maps`. Import map data helpers such as `world_countries` and `us_states`
+from `@gum-jsx/maps`. Wrap an application-defined element class with
+`createGumComponent`, or pass a named `elements` registry to a root.
 
 ## Command line
 

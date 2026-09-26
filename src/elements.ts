@@ -26,6 +26,7 @@ import {
   Accent, Underline, Overline, MathStretch, HorizBrace, XArrow,
   Phantom, Smash, Lap, Enclose, RaiseBox, VCenter, Pmb,
 } from '@gum-jsx/math'
+import { GeoMap } from '@gum-jsx/maps'
 
 // Keep the supported names explicit. Besides giving GUM useful property types,
 // this avoids accidentally treating exported helpers as element constructors.
@@ -37,7 +38,7 @@ const DEFAULT_ELEMENTS = Object.freeze({
   Box, Frame,
   HStack, VStack, Spacer, Grid,
   Group,
-  Graph,
+  Graph, GeoMap,
   Node, Edge, Network,
   Overlay, TransformBox, Rotate, Attach, Anchor,
   CoordLine, Spline, RoundedLine, Segments, Arc, Fill, HFill, VFill,
