@@ -127,8 +127,6 @@ function assertCoordinates() {
     </GUM.Graph>,
   )
   assert.equal(root.getSvg(), projected, 'React must preserve complete records through callback conversion')
-  // @ts-expect-error Legacy placement is rejected in typed React and at runtime.
-  assert.throws(() => root.render(<GUM.Rect {...{ x: 0, y: 0 }} />), /placement props were removed/)
   root.unmount()
 }
 

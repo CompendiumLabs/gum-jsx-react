@@ -59,7 +59,7 @@ from its input records. React elements also work in element-valued props and
 callback results. GeoMap children use `{lon, lat}` in degrees, with
 `[longitude, latitude]` and `{x, y}` aliases. See the
 [coordinate migration](https://github.com/CompendiumLabs/gum-jsx/blob/master/docs/MIGRATION.md#coordinate-contract-migration)
-for legacy props, local lengths, and geographic naming rules.
+for placement, local lengths, and geographic naming rules.
 
 ## Headless SVG
 
