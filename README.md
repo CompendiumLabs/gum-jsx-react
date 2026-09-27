@@ -37,6 +37,30 @@ The `GUM` components belong inside `<Gum>` or a Gum root. They describe Gum
 elements through the custom renderer. Use underscore prop names such as
 `font_size` and `stroke_width` in React TSX.
 
+Use `pos={[x, y]}` or `pos={{x, y}}` for placement. Projected Graph children
+also accept arbitrary numeric records. Projection callbacks receive the complete
+record and return a record with final `x` and `y`, or null to hide a point:
+
+```tsx
+<GUM.Graph
+  xlim={[-1, 1]} ylim={[-1, 1]}
+  projection={({ theta, r }) => ({ x: r * Math.cos(theta), y: r * Math.sin(theta) })}
+>
+  <GUM.Points
+    points={[{ theta: Math.PI / 4, r: 0.8 }]}
+    point_size={({ r }) => px(8 * r)}
+  />
+  <GUM.Text pos={{ theta: Math.PI / 4, r: 1 }} anchor="center">45°</GUM.Text>
+</GUM.Graph>
+```
+
+Callbacks retain contextual TypeScript types, including Points fields inferred
+from its input records. React elements also work in element-valued props and
+callback results. GeoMap children use `{lon, lat}` in degrees, with
+`[longitude, latitude]` and `{x, y}` aliases. See the
+[coordinate migration](https://github.com/CompendiumLabs/gum-jsx/blob/master/docs/MIGRATION.md#coordinate-contract-migration)
+for legacy props, local lengths, and geographic naming rules.
+
 ## Headless SVG
 
 Using `Scene` from the example above, create a root directly:

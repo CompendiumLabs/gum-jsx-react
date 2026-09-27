@@ -93,16 +93,42 @@ function assertMaps() {
       source={maps.world_countries({ ids: ['840'] })}
       styles={() => ({ fill: 'red' })}
     >
-      <GUM.Points points={[[-74.01, 40.71]]} point_size={px(8)} fill="blue" />
+      <GUM.Points points={[{ lon: -74.01, lat: 40.71 }]} point_size={px(8)} fill="blue" />
+      <GUM.Rect {...{ pos: { lon: -74.01, lat: 40.71 } }} width={px(4)} height={px(4)} fill="purple" />
     </GUM.GeoMap>,
   )
   const world = root.getSvg()
   assert.ok(world.includes('<path') && world.includes('fill="red"'), 'map features should render')
   assert.ok(world.includes('fill="blue"'), 'React children should render in the map projection')
+  assert.ok(world.includes('fill="purple"'), 'React spreads should retain named annotation positions')
 
   root.render(<GUM.GeoMap source={maps.us_states()} projection="albersUsa" />)
   assert.notEqual(root.getSvg(), world, 'map source and projection updates should render')
   assert.ok(root.getSvg().includes('<path'))
+  root.unmount()
+}
+
+function assertCoordinates() {
+  const root = createGumRoot({ size: [200, 100] })
+  const position = { u: 1, v: 2, w: 3 }
+  root.render(
+    <GUM.Graph xlim={[0, 10]} ylim={[0, 10]} projection={({ u, v, w }) => ({ x: u + w, y: v })}>
+      <GUM.Rect {...{ pos: position }} width={px(4)} height={px(6)} />
+      <GUM.SymPoints f={t => ({ u: t, v: 2, w: 3 })} tvals={[1, 2]} point_size={({ w }) => px(w + 1)} />
+      <GUM.Points points={[position]} point_size={({ w }) => px(w + 1)} shape={({ u }) => <GUM.Rect width={px(u)} />} />
+    </GUM.Graph>,
+  )
+  const projected = root.getSvg()
+  root.render(
+    <GUM.Graph xlim={[0, 10]} ylim={[0, 10]}>
+      <GUM.Rect pos={[4, 2]} width={px(4)} height={px(6)} />
+      <GUM.SymPoints f={t => [t + 3, 2]} tvals={[1, 2]} point_size={px(4)} />
+      <GUM.Points points={[[4, 2]]} point_size={px(4)} shape={<GUM.Rect width={px(1)} />} />
+    </GUM.Graph>,
+  )
+  assert.equal(root.getSvg(), projected, 'React must preserve complete records through callback conversion')
+  // @ts-expect-error Legacy placement is rejected in typed React and at runtime.
+  assert.throws(() => root.render(<GUM.Rect {...{ x: 0, y: 0 }} />), /placement props were removed/)
   root.unmount()
 }
 
@@ -178,7 +204,7 @@ function assertCli() {
   }
 }
 
-for (const test of [assertPrimitives, assertRendering, assertUpdates, assertMaps, assertNumericSize,
+for (const test of [assertPrimitives, assertRendering, assertUpdates, assertMaps, assertCoordinates, assertNumericSize,
   assertUniqueDefinitionIds, assertCustomElements, assertCli]) {
   test()
   console.log(`ok — ${test.name}`)

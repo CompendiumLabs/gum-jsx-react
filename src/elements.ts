@@ -27,10 +27,20 @@ import {
   Phantom, Smash, Lap, Enclose, RaiseBox, VCenter, Pmb,
 } from '@gum-jsx/math'
 import { GeoMap } from '@gum-jsx/maps'
+import type { GumElementConstructor } from './types'
+
+// Refer to the exported constructors by name in declarations, including classes
+// whose inherited static hooks refer to types from another source module.
+type ElementExports<Module> = {
+  readonly [K in keyof Module as Module[K] extends GumElementConstructor
+    ? Exclude<K, 'Element' | 'MathElement'> : never]: Module[K]
+}
+type DefaultElements = ElementExports<typeof import('@gum-jsx/core')>
+  & ElementExports<typeof import('@gum-jsx/math')> & ElementExports<typeof import('@gum-jsx/maps')>
 
 // Keep the supported names explicit. Besides giving GUM useful property types,
 // this avoids accidentally treating exported helpers as element constructors.
-const DEFAULT_ELEMENTS = Object.freeze({
+const DEFAULT_ELEMENTS: DefaultElements = Object.freeze({
   Svg, PngImage,
   Rect, RoundedRect, Square, Circle, Ellipse, Line, Polyline, Polygon, Path,
   UnitLine, HLine, VLine, Dot, Triangle,

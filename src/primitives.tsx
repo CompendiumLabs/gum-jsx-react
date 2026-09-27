@@ -1,23 +1,33 @@
-import { createElement, type PropsWithChildren, type ReactElement } from 'react'
-import type { Element } from '@gum-jsx/core'
+import { createElement, type ReactElement, type ReactNode } from 'react'
+import type { CoordinatePosition, Element, PointsProps } from '@gum-jsx/core'
 
 import { DEFAULT_ELEMENTS } from './elements'
 import type { GumElementConstructor } from './types'
 
 export const GUM_CONSTRUCTOR_PROP = '__gum_constructor__'
 
-type PropsOf<C> = C extends new (props?: infer Props) => Element
-  ? Props extends object ? Props : Record<string, unknown>
+// Class-backed elements also expose a two-argument source descriptor overload.
+// Only the ordinary props constructor describes a React primitive's input.
+type PropsOf<C> = C extends new (...args: infer Args) => Element
+  ? Extract<Args, [props?: object]> extends [props?: infer Props]
+    ? Props extends object ? Props : Record<string, unknown>
+    : Record<string, unknown>
   : Record<string, unknown>
+// Match runtime conversion of nested elements and callback results. Callback
+// arguments remain source data, preserving coordinate types for destructuring.
+type ReactValue<T> = T extends Element ? T | ReactElement
+  : T extends (...args: infer Args) => infer Result ? (...args: Args) => ReactValue<Result>
+  : T extends object ? { [K in keyof T]: ReactValue<T[K]> } : T
+type ReactProps<Props> = ReactValue<Omit<Props, 'children'>> & { children?: ReactNode }
 export type GumPrimitiveComponent<Props extends object = Record<string, unknown>> =
-  (props: PropsWithChildren<Props>) => ReactElement
+  (props: ReactProps<Props>) => ReactElement
 
 export function createGumComponent<C extends GumElementConstructor>(
   constructor: C,
   name = constructor.name,
 ): GumPrimitiveComponent<PropsOf<C>> {
-  return function GumPrimitive(props: PropsWithChildren<PropsOf<C>>) {
-    return createElement(`gum.${name}`, { ...props, [GUM_CONSTRUCTOR_PROP]: constructor }, props.children)
+  return function GumPrimitive(props: ReactProps<PropsOf<C>>) {
+    return createElement<Record<string, unknown>>(`gum.${name}`, { ...props, [GUM_CONSTRUCTOR_PROP]: constructor }, props.children)
   }
 }
 
@@ -38,7 +48,9 @@ function getPrimitive(name: string): GumPrimitiveComponent {
 }
 
 export type GumElements = {
-  readonly [K in keyof typeof DEFAULT_ELEMENTS]: GumPrimitiveComponent<PropsOf<typeof DEFAULT_ELEMENTS[K]>>
+  readonly [K in keyof typeof DEFAULT_ELEMENTS]: K extends 'Points'
+    ? <P extends CoordinatePosition = CoordinatePosition>(props: ReactProps<PointsProps<P>>) => ReactElement
+    : GumPrimitiveComponent<PropsOf<typeof DEFAULT_ELEMENTS[K]>>
 } & {
   readonly [name: string]: GumPrimitiveComponent
 }
