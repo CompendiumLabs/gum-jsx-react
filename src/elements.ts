@@ -17,7 +17,7 @@ import {
   Plot, BarPlot, Legend, LegendItem, OuterLabel,
   TextStack, TextRow, TextCol, TextGrid, TextBox, TextFrame, TextFigure,
   TitleBox, TitleFrame, Bullets, Slide,
-  SymLine, SymSpline, SymPoly, SymPoints, SymFill, Field, SymField,
+  SymLine, SymSpline, SymArrow, SymPoly, SymPoints, SymFill, Field, SymField,
 } from '@gum-jsx/core'
 import {
   MathSpan, MathSymbol, MathSpacer, MathRule,
@@ -59,7 +59,7 @@ const DEFAULT_ELEMENTS: DefaultElements = Object.freeze({
   Plot, BarPlot, Legend, LegendItem, OuterLabel,
   TextStack, TextRow, TextCol, TextGrid, TextBox, TextFrame, TextFigure,
   TitleBox, TitleFrame, Bullets, Slide,
-  SymLine, SymSpline, SymPoly, SymPoints, SymFill, Field, SymField,
+  SymLine, SymSpline, SymArrow, SymPoly, SymPoints, SymFill, Field, SymField,
   MathSpan, MathSymbol, MathSpacer, MathRule,
   MathRow, MathText, MathChoice, MathCol, MathBox, Latex, Tex,
   MathOp, SupSub, Frac, Sqrt, Bracket, TextMode, MathArray,

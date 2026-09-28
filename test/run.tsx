@@ -115,6 +115,7 @@ function assertCoordinates() {
     <GUM.Graph xlim={[0, 10]} ylim={[0, 10]} projection={({ u, v, w }) => ({ x: u + w, y: v })}>
       <GUM.Rect {...{ pos: position }} width={px(4)} height={px(6)} />
       <GUM.SymPoints f={t => ({ u: t, v: 2, w: 3 })} tvals={[1, 2]} point_size={({ w }) => px(w + 1)} />
+      <GUM.SymArrow f={t => ({ u: t, v: 2, w: 3 })} tvals={[1, 2]} start_head head_open />
       <GUM.Points points={[position]} point_size={({ w }) => px(w + 1)} shape={({ u }) => <GUM.Rect width={px(u)} />} />
     </GUM.Graph>,
   )
@@ -123,6 +124,7 @@ function assertCoordinates() {
     <GUM.Graph xlim={[0, 10]} ylim={[0, 10]}>
       <GUM.Rect pos={[4, 2]} width={px(4)} height={px(6)} />
       <GUM.SymPoints f={t => [t + 3, 2]} tvals={[1, 2]} point_size={px(4)} />
+      <GUM.Arrow points={[[4, 2], [5, 2]]} start_head head_open />
       <GUM.Points points={[[4, 2]]} point_size={px(4)} shape={<GUM.Rect width={px(1)} />} />
     </GUM.Graph>,
   )
