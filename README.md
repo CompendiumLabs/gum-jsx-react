@@ -1,6 +1,6 @@
 # @gum-jsx/react
 
-React bindings for [gum-jsx](https://github.com/CompendiumLabs/gum-jsx). The package provides a custom renderer for headless SVG generation and a `<Gum>` component for React DOM applications.
+React bindings for [Gum](https://github.com/CompendiumLabs/gum-jsx). The package provides a custom renderer for headless SVG generation and a `<Gum>` component for React DOM applications.
 
 See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for
 getting started and the package overview. Compatible React and React DOM versions
