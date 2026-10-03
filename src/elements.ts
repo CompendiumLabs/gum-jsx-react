@@ -1,6 +1,6 @@
 import {
   Svg, PngImage,
-  Rect, RoundedRect, Square, Circle, Ellipse, Line, Polyline, Polygon, Path,
+  Rect, RoundedRect, Square, Circle, Ellipse, Line, Polygon, Path,
   UnitLine, HLine, VLine, Dot, Triangle,
   Text, Span,
   Box, Frame,
@@ -9,7 +9,7 @@ import {
   Graph,
   Node, Edge, Network,
   Overlay, TransformBox, Rotate, Attach,
-  CoordLine, Spline, RoundedLine, Segments, Arc, Fill, HFill, VFill,
+  Polyline, Spline, RoundedLine, Segments, Arc, Fill, HFill, VFill,
   Arrow, ArrowHead, Ray, Points,
   Bar, VBar, HBar, Bars, VBars, HBars,
   Axis, HAxis, VAxis, Scale, HScale, VScale, Label, HLabel, VLabel,
@@ -42,7 +42,7 @@ type DefaultElements = ElementExports<typeof import('@gum-jsx/core')>
 // this avoids accidentally treating exported helpers as element constructors.
 const DEFAULT_ELEMENTS: DefaultElements = Object.freeze({
   Svg, PngImage,
-  Rect, RoundedRect, Square, Circle, Ellipse, Line, Polyline, Polygon, Path,
+  Rect, RoundedRect, Square, Circle, Ellipse, Line, Polygon, Path,
   UnitLine, HLine, VLine, Dot, Triangle,
   Text, Span,
   Box, Frame,
@@ -51,7 +51,7 @@ const DEFAULT_ELEMENTS: DefaultElements = Object.freeze({
   Graph, GeoMap,
   Node, Edge, Network,
   Overlay, TransformBox, Rotate, Attach,
-  CoordLine, Spline, RoundedLine, Segments, Arc, Fill, HFill, VFill,
+  Polyline, Spline, RoundedLine, Segments, Arc, Fill, HFill, VFill,
   Arrow, ArrowHead, Ray, Points,
   Bar, VBar, HBar, Bars, VBars, HBars,
   Axis, HAxis, VAxis, Scale, HScale, VScale, Label, HLabel, VLabel,
