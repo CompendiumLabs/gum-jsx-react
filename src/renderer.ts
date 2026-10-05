@@ -1,4 +1,5 @@
 import Reconciler from 'react-reconciler'
+import { version } from '../package.json'
 import { createContext, type ReactNode } from 'react'
 import { LayoutPass, make_size, type Size, type ThemeName } from '@gum-jsx/core'
 import { createMathFonts } from '@gum-jsx/math'
@@ -83,7 +84,7 @@ function flushIfDirty(container: GumContainer): void {
 }
 
 const hostConfig: any = {
-  rendererVersion: '2.0.0',
+  rendererVersion: version,
   rendererPackageName: '@gum-jsx/react',
   extraDevToolsConfig: null,
   now: Date.now,
