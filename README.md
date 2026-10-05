@@ -1,10 +1,11 @@
 # @gum-jsx/react
 
-React bindings for [Gum](https://github.com/CompendiumLabs/gum-jsx). The package provides a custom renderer for headless SVG generation and a `<Gum>` component for React DOM applications.
+[Gum](https://github.com/CompendiumLabs/gum-jsx) — installation, quickstart, and user documentation.
 
-See the [Gum project](https://github.com/CompendiumLabs/gum-jsx#readme) for
-getting started and the package overview. Compatible React and React DOM versions
-are listed in the [peer dependencies](./package.json).
+React bindings for Gum. The package provides a custom renderer for headless
+SVG generation and a `<Gum>` component for React DOM applications.
+
+Compatible React and React DOM versions are listed in the [peer dependencies](./package.json).
 
 ## React DOM
 
@@ -56,10 +57,7 @@ record and return a record with final `x` and `y`, or null to hide a point:
 
 Callbacks retain contextual TypeScript types, including Points fields inferred
 from its input records. React elements also work in element-valued props and
-callback results. GeoMap children use `{lon, lat}` in degrees, with
-`[longitude, latitude]` and `{x, y}` aliases. See the
-[coordinate migration](https://github.com/CompendiumLabs/gum-jsx/blob/master/docs/MIGRATION.md#coordinate-contract-migration)
-for placement, local lengths, and geographic naming rules.
+callback results.
 
 ## Headless SVG
 
