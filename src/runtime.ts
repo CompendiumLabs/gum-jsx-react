@@ -7,7 +7,7 @@ import {
   px,
   render_element,
 } from '@gum-jsx/core'
-import type { SvgProps } from '@gum-jsx/core'
+import type { PageProps } from '@gum-jsx/core'
 
 import { DEFAULT_ELEMENTS } from './elements'
 import { GUM_CONSTRUCTOR_PROP } from './primitives'
@@ -147,11 +147,11 @@ export function renderContainer(container: GumContainer): void {
   const bounds = typeof container.size === 'number'
     ? { max_width: px(container.size), max_height: px(container.size) }
     : {}
-  // Root props, bounds, and the container theme win over a source Svg's own props.
+  // Root props, bounds, and the container theme win over a source Page's own props.
   // The shared pass keeps its cache; fonts loaded since the last render refresh it.
   const { svg, size } = render_element(content, {
     request: viewportRequest(container.size),
-    overrides: { ...props, ...bounds, theme: container.theme } as SvgProps,
+    overrides: { ...props, ...bounds, theme: container.theme } as PageProps,
     id_prefix: container.idPrefix,
     pass: container.pass,
     fonts: container.fonts,

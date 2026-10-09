@@ -1,5 +1,5 @@
 import {
-  Svg, PngImage,
+  Page, PngImage,
   Rect, RoundedRect, Square, Circle, Ellipse, Line, Polygon, Path,
   UnitLine, HLine, VLine, Dot, Triangle,
   Text, Span,
@@ -41,7 +41,7 @@ type DefaultElements = ElementExports<typeof import('@gum-jsx/core')>
 // Keep the supported names explicit. Besides giving GUM useful property types,
 // this avoids accidentally treating exported helpers as element constructors.
 const DEFAULT_ELEMENTS: DefaultElements = Object.freeze({
-  Svg, PngImage,
+  Page, PngImage,
   Rect, RoundedRect, Square, Circle, Ellipse, Line, Polygon, Path,
   UnitLine, HLine, VLine, Dot, Triangle,
   Text, Span,
