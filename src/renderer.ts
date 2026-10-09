@@ -15,6 +15,7 @@ import type {
   GumHostProps,
   GumHostText,
   GumHostType,
+  GumRenderOptions,
   GumSize,
 } from './types'
 
@@ -38,7 +39,7 @@ export interface GumRoot {
   getSize: () => Size
 }
 
-export interface GumRootOptions {
+export interface GumRootOptions extends GumRenderOptions {
   size?: GumSize
   theme?: ThemeName
   elements?: GumElementRegistry
@@ -205,9 +206,14 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     fonts = createMathFonts(),
     props,
     onRender,
+    textMode,
+    background,
+    title,
+    idPrefix = `gum-react-${nextRootId++}`,
+    precision,
   } = options
   const container: GumContainer = {
-    idPrefix: `gum-react-${nextRootId++}`,
+    idPrefix, textMode, background, title, precision,
     size, theme, elements, fonts,
     pass: new LayoutPass({ fonts: { value: fonts, version: fonts.version ?? 0 } }),
     props,

@@ -1,18 +1,20 @@
 #!/usr/bin/env bun
 
 import type { BuildArtifact, BunPlugin } from 'bun'
-import { program } from 'commander'
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs'
+import { InvalidArgumentError, Option, program } from 'commander'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import type { ComponentType } from 'react'
-import type { ThemeName } from '@gum-jsx/core'
+import type { OutputPrecision, ThemeName } from '@gum-jsx/core'
 import { createGumRoot } from '@gum-jsx/react'
+import type { GumRenderOptions } from '@gum-jsx/react'
 
-interface CliOptions {
+interface CliOptions extends GumRenderOptions {
   size: number
   theme: ThemeName
   cwd?: string
+  output?: string
 }
 
 interface ComponentProps {
@@ -49,6 +51,15 @@ function parseSize(value: string): number {
 function parseTheme(value: string): ThemeName {
   if (value === 'light' || value === 'dark') return value
   throw new Error(`invalid theme: ${value}`)
+}
+
+// Match the standard Gum CLI's SVG precision values.
+function precision_option(value: string): OutputPrecision {
+  if (value === 'full') return value
+  if (!/^(?:[0-9]|[1-9][0-9]|100)$/.test(value)) {
+    throw new InvalidArgumentError('precision must be an integer from 0 to 100, or "full"')
+  }
+  return Number(value)
 }
 
 function findPackageRoot(name: string): string | null {
@@ -139,20 +150,29 @@ async function main() {
     .argument('<component>', 'path to a component .tsx file')
     .option('-s, --size <pixels>', 'maximum SVG dimension', parseSize, 500)
     .option('-t, --theme <theme>', 'color theme (light or dark)', parseTheme, 'light')
+    .addOption(new Option('--text-mode <mode>', 'text rendering (mixed keeps math outlined)')
+      .choices(['path', 'live', 'mixed']).default('path'))
+    .option('-o, --output <file>', 'write SVG to a file instead of stdout')
+    .option('-b, --background <color>', 'paint the viewport background')
+    .option('--title <text>', 'set the SVG document title')
+    .option('--id-prefix <name>', 'prefix SVG definition IDs')
+    .option('--precision <digits|full>', 'output decimal places (0–100; default: 10)', precision_option)
     .option('-c, --cwd <dir>', 'base directory for relative ?raw imports')
     .parse()
 
   const input = program.args[0]
   if (input == null) throw new Error('component path is required')
-  const { size, theme, cwd } = program.opts<CliOptions>()
+  const { size, theme, cwd, output, ...render_options } = program.opts<CliOptions>()
   let cleanup = () => {}
   try {
     const bundle = await loadComponent(input, cwd)
     cleanup = bundle.cleanup
-    const root = createGumRoot({ size, theme })
+    const root = createGumRoot({ size, theme, ...render_options })
     await root.loadFonts()
     root.render(<bundle.Component theme={theme} />)
-    console.log(root.getSvg())
+    const svg = root.getSvg() + '\n'
+    if (output) writeFileSync(output, svg)
+    else process.stdout.write(svg)
   } finally {
     cleanup()
   }

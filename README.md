@@ -76,9 +76,12 @@ those offers, then the completed figure scales down uniformly if necessary,
 including both dimensions, fonts, and strokes. Pass `[width, height]` or
 `{ width, height }` for exact viewport dimensions instead.
 
+Roots also accept `textMode`, `background`, `title`, `idPrefix`, and `precision`
+options. For example, `createGumRoot({ textMode: 'live' })` keeps text selectable.
+
 ## Fonts and emoji
 
-Text is outlined, so figures need no page fonts. Emoji are the exception: core
+Text is outlined by default, so figures need no page fonts. Emoji are the exception: core
 measures them with a bundled metrics face and keeps them as live SVG text in the
 family `Noto Color Emoji`. `<Gum>` renders inline, so the page's own `@font-face`
 rule paints them. Without one, the viewer's emoji font is used, with each emoji
@@ -109,12 +112,24 @@ Save the first example as `figure.tsx`. The `gum-react` command renders its
 default-exported `Scene` component to SVG.
 
 ```sh
-bun run --silent gum-react figure.tsx --size 800 --theme dark > figure.svg
+bun run --silent gum-react figure.tsx --size 800 --theme dark --text-mode live -o figure.svg
 ```
 
 The CLI's numeric `--size` likewise sets the maximum output dimension.
 It accepts `--cwd` to choose the base directory for relative
 `?raw` imports and passes the selected `theme` to the exported component.
+
+The standard Gum SVG options are also available:
+
+- `--text-mode path|live|mixed`: outline text (the default), keep prose and math
+  as SVG text, or keep prose as text while outlining math. Live text uses the
+  viewer's fonts.
+- `-o, --output <file>`: write SVG to a file; otherwise print it to stdout.
+- `-b, --background <color>`: paint the viewport background.
+- `--title <text>`: set the SVG document title.
+- `--id-prefix <name>`: choose the prefix for SVG definition IDs.
+- `--precision <digits|full>`: choose 0–100 decimal places or full precision
+  (default: 10).
 
 ## Development
 

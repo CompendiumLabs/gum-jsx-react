@@ -15,5 +15,6 @@ export type {
   GumHostProps,
   GumHostText,
   GumHostType,
+  GumRenderOptions,
   GumSize,
 } from './types'

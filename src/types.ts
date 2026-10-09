@@ -1,4 +1,6 @@
-import type { Element, FontProvider, Fonts, Size, ThemeName } from '@gum-jsx/core'
+import type {
+  Element, FontProvider, Fonts, OutputPrecision, Size, TextRenderMode, ThemeName,
+} from '@gum-jsx/core'
 import type { LayoutPass } from '@gum-jsx/core'
 
 export type GumHostType = `gum.${string}`
@@ -8,6 +10,14 @@ export type GumElementConstructor<Props extends object = Record<string, unknown>
   new (...args: any[]) => Element
 export type GumElementRegistry = Readonly<Record<string, GumElementConstructor>>
 export type GumFonts = FontProvider & Partial<Pick<Fonts, 'load' | 'version'>>
+
+export interface GumRenderOptions {
+  textMode?: TextRenderMode
+  background?: string
+  title?: string
+  idPrefix?: string
+  precision?: OutputPrecision
+}
 
 export interface GumHostProps {
   children?: unknown
@@ -30,7 +40,7 @@ export interface GumHostInstance {
 
 export type GumHostChild = GumHostInstance | GumHostText
 
-export interface GumContainer {
+export interface GumContainer extends GumRenderOptions {
   idPrefix: string
   size: GumSize
   theme?: ThemeName

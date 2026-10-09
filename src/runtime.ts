@@ -152,7 +152,11 @@ export function renderContainer(container: GumContainer): void {
   const { svg, size } = render_element(content, {
     request: viewportRequest(container.size),
     overrides: { ...props, ...bounds, theme: container.theme } as PageProps,
+    text_mode: container.textMode,
+    background: container.background,
+    title: container.title,
     id_prefix: container.idPrefix,
+    precision: container.precision,
     pass: container.pass,
     fonts: container.fonts,
   })
