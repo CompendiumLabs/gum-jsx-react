@@ -1,4 +1,5 @@
 import Reconciler from 'react-reconciler'
+import { DefaultEventPriority, NoEventPriority } from 'react-reconciler/constants'
 import { version } from '../package.json'
 import { createContext, type ReactNode } from 'react'
 import { LayoutPass, make_size, type Size, type ThemeName } from '@gum-jsx/core'
@@ -19,8 +20,7 @@ import type {
   GumSize,
 } from './types'
 
-const DEFAULT_EVENT_PRIORITY = 0
-let currentUpdatePriority = DEFAULT_EVENT_PRIORITY
+let currentUpdatePriority: number = NoEventPriority
 let nextRootId = 0
 const HOST_CONTEXT = {}
 const NOOP = () => {}
@@ -34,6 +34,7 @@ export interface GumRoot {
   setTheme: (theme?: ThemeName) => void
   setElements: (elements?: GumElementRegistry) => void
   setProps: (props?: Record<string, unknown>) => void
+  setRenderOptions: (options: GumRenderOptions) => void
   setRenderCallback: (fn?: (svg: string) => void) => void
   getSvg: () => string
   getSize: () => Size
@@ -82,6 +83,16 @@ function flushIfDirty(container: GumContainer): void {
     container.renderError = error
   }
   container.dirty = false
+}
+
+// React commit callbacks record failures; synchronous root calls surface them.
+function finish_render(container: GumContainer): void {
+  flushIfDirty(container)
+  if ('renderError' in container) {
+    const error = container.renderError
+    delete container.renderError
+    throw error
+  }
 }
 
 const hostConfig: any = {
@@ -147,14 +158,15 @@ const hostConfig: any = {
   scheduleTimeout: setTimeout,
   cancelTimeout: clearTimeout,
   noTimeout: -1,
-  getCurrentEventPriority: () => DEFAULT_EVENT_PRIORITY,
+  getCurrentEventPriority: () => DefaultEventPriority,
   trackSchedulerEvent: NOOP,
   resolveEventType: () => null,
   resolveEventTimeStamp: () => Date.now(),
   shouldAttemptEagerTransition: () => false,
   setCurrentUpdatePriority: (priority: number) => { currentUpdatePriority = priority },
   getCurrentUpdatePriority: () => currentUpdatePriority,
-  resolveUpdatePriority: () => currentUpdatePriority,
+  // Hook updates outside an active event still need a schedulable priority.
+  resolveUpdatePriority: () => currentUpdatePriority || DefaultEventPriority,
   maySuspendCommit: () => false,
   maySuspendCommitOnUpdate: () => false,
   maySuspendCommitInSyncRender: () => false,
@@ -186,7 +198,7 @@ const GumReconciler = Reconciler(hostConfig)
 function createInternalRoot(container: GumContainer): any {
   return GumReconciler.createContainer(
     container, 0, null, false, null, '',
-    console.error, console.error, console.log, () => {},
+    error => { container.renderError = error }, console.error, console.log, () => {},
   )
 }
 
@@ -199,6 +211,8 @@ function updateInternalRoot(root: any, children: ReactNode, callback?: () => voi
 }
 
 export function createGumRoot(options: GumRootOptions = {}): GumRoot {
+  // Retain a unique fallback when a caller later removes a custom prefix.
+  const default_prefix = `gum-react-${nextRootId++}`
   const {
     size = 500,
     theme = 'light',
@@ -209,7 +223,7 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     textMode,
     background,
     title,
-    idPrefix = `gum-react-${nextRootId++}`,
+    idPrefix = default_prefix,
     precision,
   } = options
   const container: GumContainer = {
@@ -229,16 +243,11 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     container,
     render(children): void {
       updateInternalRoot(internalRoot, children)
-      flushIfDirty(container)
-      if (container.renderError != null) {
-        const error = container.renderError
-        container.renderError = undefined
-        throw error
-      }
+      finish_render(container)
     },
     unmount(): void {
       updateInternalRoot(internalRoot, null)
-      flushIfDirty(container)
+      finish_render(container)
     },
     async loadFonts(): Promise<void> {
       await container.fonts.load?.()
@@ -248,25 +257,33 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
       if (sizeEquals(container.size, nextSize)) return
       container.size = nextSize
       container.dirty = true
-      flushIfDirty(container)
+      finish_render(container)
     },
     setTheme(nextTheme): void {
       if (container.theme === nextTheme) return
       container.theme = nextTheme
       container.dirty = true
-      flushIfDirty(container)
+      finish_render(container)
     },
     setElements(nextElements): void {
       if (container.elements === nextElements) return
       container.elements = nextElements
       container.dirty = true
-      flushIfDirty(container)
+      finish_render(container)
     },
     setProps(nextProps): void {
       if (isEqualProps(container.props ?? {}, nextProps ?? {})) return
       container.props = nextProps
       container.dirty = true
-      flushIfDirty(container)
+      finish_render(container)
+    },
+    // Replace output settings without remounting the React tree or reloading fonts.
+    setRenderOptions({ textMode, background, title, idPrefix = default_prefix, precision }): void {
+      const next = { textMode, background, title, idPrefix, precision }
+      if (Object.entries(next).every(([key, value]) => container[key as keyof GumRenderOptions] === value)) return
+      Object.assign(container, next)
+      container.dirty = true
+      finish_render(container)
     },
     setRenderCallback(fn): void { container.onRender = fn },
     getSvg: () => container.currentSvg,

@@ -78,6 +78,10 @@ including both dimensions, fonts, and strokes. Pass `[width, height]` or
 
 Roots also accept `textMode`, `background`, `title`, `idPrefix`, and `precision`
 options. For example, `createGumRoot({ textMode: 'live' })` keeps text selectable.
+`<Gum>` accepts the same options and updates them without remounting its children.
+For headless roots, `root.setRenderOptions(options)` replaces these settings;
+omitted options return to their defaults. Uncaught component and layout errors
+propagate from synchronous root calls, and `gum-react` exits unsuccessfully.
 
 ## Fonts and emoji
 
