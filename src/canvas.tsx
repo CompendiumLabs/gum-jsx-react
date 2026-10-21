@@ -81,10 +81,14 @@ export function Gum({ size = 500, theme = 'light', elements, fonts, className, s
       if (!latest.current.onError) console.error(error)
     }
     const root = createGumRoot({ ...latest.current.options, fonts, onError: show_error })
-    const browser_fonts = acquire_fonts(root.container.fonts, host_ref.current!.ownerDocument)
+    let browser_fonts: ReturnType<typeof acquire_fonts> | undefined
     set_error(null)
     set_host(null)
-    void Promise.all([root.loadFonts(), browser_fonts.ready]).then(() => {
+    // Finish measurement preload before FontFace requests the same asset URLs.
+    void root.loadFonts().then(async () => {
+      if (cancelled) return
+      browser_fonts = acquire_fonts(root.container.fonts, host_ref.current!.ownerDocument)
+      await browser_fonts.ready
       if (cancelled) return
       root_ref.current = root
       set_host({ root, fonts: browser_fonts.fonts })
@@ -95,7 +99,7 @@ export function Gum({ size = 500, theme = 'light', elements, fonts, className, s
       root_ref.current = null
       input.current = null
       root.unmount()
-      browser_fonts.release()
+      browser_fonts?.release()
     }
   }, [fonts, fonts?.version])
 

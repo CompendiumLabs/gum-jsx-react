@@ -17,7 +17,8 @@ export function acquire_fonts(provider: GumFonts, document: Document) {
   const version = provider.version ?? 0
   if (!entry || entry.version !== version) {
     const names = new Map<string, string>()
-    const faces = (provider.font_sources?.() ?? []).map((source: FontSource) => {
+    const sources = provider.font_sources?.() ?? []
+    const faces = sources.map((source: FontSource) => {
       const name = `gum-face-${next_family++}`
       names.set(face_key(source.family, source.weight, source.style), name)
       const data = source.source instanceof URL ? `url(${JSON.stringify(source.source.href)})`
@@ -28,7 +29,11 @@ export function acquire_fonts(provider: GumFonts, document: Document) {
     })
     entry = { version, users: 0, faces,
       fonts: { family: draw => names.get(face_key(draw.font_family, draw.font_weight, draw.font_style)) ?? draw.font_family },
-      ready: Promise.all(faces.map(face => face.load())).then(() => {}),
+      ready: Promise.all(faces.map((face, index) => face.load().catch(cause => {
+        const source = sources[index]
+        const origin = source.source instanceof URL ? source.source.href : 'registered bytes'
+        throw new Error(`Unable to load browser font ${source.family} from ${origin}: ${cause}`, { cause })
+      }))).then(() => {}),
     }
     documents.set(document, entry)
   }

@@ -227,8 +227,10 @@ For live and mixed text, `<Gum>` registers the faces returned by `font_sources()
 with the browser as well as loading them for measurement. Registration is shared
 by provider/document and released on unmount; distinct providers use separate
 browser family names. A custom provider without `font_sources()` must arrange its
-own browser fonts. All available faces are loaded at mount to avoid asynchronous
-font changes during scene updates.
+own browser fonts. Measurement fonts finish loading before browser registration,
+so the two loaders do not compete for the same asset URLs during initialization.
+All available faces are loaded at mount to avoid asynchronous font changes during
+scene updates.
 
 `onError` reports font, scene and layout failures. `<Gum>` displays an error until
 corrected input succeeds. Synchronous headless errors still throw; root `onError`
