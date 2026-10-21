@@ -7,7 +7,7 @@ import type { LayoutPass } from '@gum-jsx/core'
 export type GumHostType = `gum.${string}`
 // A scalar is the maximum extent on either axis; pairs are exact dimensions.
 export type GumSize = number | Size | readonly [width: number, height: number]
-export type GumElementConstructor<Props extends object = Record<string, unknown>> =
+export type GumElementConstructor =
   new (...args: any[]) => Element
 export type GumElementRegistry = Readonly<Record<string, GumElementConstructor>>
 export type GumFonts = FontProvider & Partial<Pick<Fonts, 'load' | 'version' | 'font_sources'>>
