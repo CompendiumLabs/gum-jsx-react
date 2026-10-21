@@ -20,8 +20,17 @@ bun run example:production
 Use `PORT=3032` to choose another port. Production explicitly disables Gum's
 runtime freezing and uses production React. The footer shows both settings.
 
+The default backend is retained SVG DOM. The **Backend** selector switches to the
+old string-insertion path for comparisons of the same scene. Switching backends
+remounts the scene and resets local drag offsets.
+
 ## Try these updates
 
+- **Interaction:** select and drag a marker while playback continues. Tab focuses
+  units; Enter/Space selects; arrow keys move (Shift uses a larger step). Reverse
+  order, remove a selected unit, and restore units to exercise identity and cleanup.
+  Drag and keyboard edits shift tracks and trails in longitude/latitude, so they
+  stay anchored to the map through zoom, pan, and viewport changes.
 - **No-op update:** refresh the same scene. Source conversion, layout, SVG output,
   and DOM insertion should all be zero after the initial render.
 - **One unit:** animate one track while preserving the other source subtrees.
@@ -45,15 +54,19 @@ retained subtrees encountered by conversion, not all descendants inside them.
 Layout and cache-hit counts are deltas from the shared `LayoutPass`.
 
 The timing stages are source conversion, layout, SVG serialization, and synchronous
-DOM insertion. **Update to commit** also includes scheduling and React work.
+SVG DOM update. **Update to commit** also includes scheduling and React work.
 **Frame interval** is the time between animation callbacks; manual updates are
-excluded from that statistic. DOM insertion does not include later browser paint,
+excluded from that statistic. SVG DOM update includes output rendering and React commit (markup insertion in
+the string baseline), but does not include later browser paint,
 and the interval is not a precise presentation timestamp. Use browser performance
 tools to inspect paint, allocation, and GC when investigating a bottleneck.
 
-This example still uses the SVG string backend. Changed markup replaces the SVG
-DOM; retained DOM output and element events are later roadmap phases. Text uses
-outlines so the benchmark does not depend on installed browser font faces.
+Retained mode does not serialize SVG during updates. Unchanged fragment output
+and path strings are reused; groups survive movement and keyed reordering. Text
+uses outlines. String mode still replaces changed SVG markup and has no element
+interaction. The library also supports live/mixed text with browser font loading.
+
+Open `/test` on the development server for the automated browser contracts.
 
 ## Headless comparison
 

@@ -1,8 +1,9 @@
 import page from './index.html'
+import contracts from '../test/browser.html'
 import { basename } from 'node:path'
 
 const production = process.argv.includes('--production')
-let routes: Record<string, Bun.HTMLBundle | Response> = { '/': page }
+let routes: Record<string, Bun.HTMLBundle | Response> = { '/': page, '/test': contracts }
 
 // Explicitly disable runtime freezing in the measured browser build.
 if (production) {

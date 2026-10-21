@@ -1,3 +1,4 @@
+import type { GumInteractionProps } from './interaction'
 import type {
   Element, FontProvider, Fonts, Fragment, OutputPrecision, Size, TextRenderMode, ThemeName,
 } from '@gum-jsx/core'
@@ -9,7 +10,7 @@ export type GumSize = number | Size | readonly [width: number, height: number]
 export type GumElementConstructor<Props extends object = Record<string, unknown>> =
   new (...args: any[]) => Element
 export type GumElementRegistry = Readonly<Record<string, GumElementConstructor>>
-export type GumFonts = FontProvider & Partial<Pick<Fonts, 'load' | 'version'>>
+export type GumFonts = FontProvider & Partial<Pick<Fonts, 'load' | 'version' | 'font_sources'>>
 
 export interface GumRenderOptions {
   textMode?: TextRenderMode
@@ -32,6 +33,7 @@ export interface GumHostText {
 
 export interface GumHostInstance {
   kind: 'instance'
+  source_key: string
   type: GumHostType
   props: GumHostProps
   children: GumHostChild[]
@@ -55,6 +57,16 @@ export interface GumRenderStats {
   svg_ms: number
 }
 
+// Geometry and browser bindings travel together; handlers never enter core data.
+export type GumBindings = Readonly<GumInteractionProps & Record<string, unknown>>
+export type GumSnapshot = Readonly<{
+  revision: number
+  fragment: Fragment
+  bindings: ReadonlyMap<string, GumBindings>
+  options: Readonly<GumRenderOptions>
+  stats: GumRenderStats
+}>
+
 export interface GumContainer extends GumRenderOptions {
   idPrefix: string
   size: GumSize
@@ -64,7 +76,10 @@ export interface GumContainer extends GumRenderOptions {
   pass: LayoutPass
   props?: Record<string, unknown>
   rootChildren: GumHostChild[]
-  currentSvg: string
+  currentSvg?: string
+  snapshot?: GumSnapshot
+  listeners: Set<() => void>
+  bindings_dirty: boolean
   currentSize: Size
   currentFragment?: Fragment
   stats?: GumRenderStats
@@ -75,12 +90,24 @@ export interface GumContainer extends GumRenderOptions {
   renderError?: unknown
   dirty: boolean
   onRender?: (svg: string, stats: GumRenderStats) => void
+  onError?: (error: unknown) => void
 }
 
 // React owns child lists and host bindings; only source props enter core.
 export function is_host_prop(key: string): boolean {
   return key === 'children' || key === 'key' || key === 'ref'
-    || key === '__self' || key === '__source' || /^on[A-Z]/.test(key)
+    || key === '__self' || key === '__source' || is_binding_prop(key)
+}
+
+export function is_binding_prop(key: string): boolean {
+  return /^on[A-Z]/.test(key) || key.startsWith('aria-') || key.startsWith('data-')
+    || ['role', 'tabIndex', 'pointerEvents', 'cursor', 'domStyle', 'disabled', 'domRef'].includes(key)
+}
+
+export function mark_bindings(node: GumHostInstance): void {
+  let parent: GumHostInstance | GumContainer | null = node
+  while (parent && 'kind' in parent) parent = parent.parent
+  if (parent) parent.bindings_dirty = true
 }
 
 // Rebuild changed ancestors while leaving sibling source identities intact.
@@ -90,15 +117,17 @@ export function mark_dirty(node: GumHostChild | GumContainer): void {
     if (current.kind === 'instance') delete current.element
     current = current.parent
   }
-  if (current) current.dirty = true
+  if (current) { current.dirty = true; current.bindings_dirty = true }
 }
 
 function isHostInstance(node: GumHostInstance | GumContainer): node is GumHostInstance {
   return (node as GumHostInstance).kind === 'instance'
 }
 
+let next_source = 0
+
 export function createHostInstance(type: GumHostType, props: GumHostProps): GumHostInstance {
-  return { kind: 'instance', type, props, children: [], parent: null }
+  return { kind: 'instance', source_key: `source-${next_source++}`, type, props, children: [], parent: null }
 }
 
 export function createHostText(text: string): GumHostText {

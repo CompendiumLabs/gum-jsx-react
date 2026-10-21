@@ -19,3 +19,7 @@ export type {
   GumRenderStats,
   GumSize,
 } from './types'
+
+export { local_point } from './interaction'
+export type { GumHandle, GumInteractionProps } from './interaction'
+export type { GumSnapshot } from './types'

@@ -1,3 +1,4 @@
+import type { GumInteractionProps } from './interaction'
 import { createElement, type ReactElement, type ReactNode } from 'react'
 import type { CoordinatePosition, Element, PointsProps } from '@gum-jsx/core'
 
@@ -18,7 +19,8 @@ type PropsOf<C> = C extends new (...args: infer Args) => Element
 type ReactValue<T> = T extends Element ? T | ReactElement
   : T extends (...args: infer Args) => infer Result ? (...args: Args) => ReactValue<Result>
   : T extends object ? { [K in keyof T]: ReactValue<T[K]> } : T
-type ReactProps<Props> = ReactValue<Omit<Props, 'children'>> & { children?: ReactNode }
+type ReactProps<Props> = ReactValue<Omit<Props, 'children' | keyof GumInteractionProps>>
+  & GumInteractionProps & { children?: ReactNode }
 export type GumPrimitiveComponent<Props extends object = Record<string, unknown>> =
   (props: ReactProps<Props>) => ReactElement
 

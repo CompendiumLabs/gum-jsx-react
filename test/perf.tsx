@@ -22,6 +22,8 @@ function quantile(values: number[], fraction: number): number {
 for (const count of [32, 128, 512]) {
   for (const motion of ['none', 'one', 'all'] as Motion[]) {
     const root: GumRoot = createGumRoot({ size: [960, 538], idPrefix: 'perf' })
+    // The comparison includes SVG serialization, now an explicit export request.
+    root.setRenderCallback(() => {})
     await root.loadFonts()
     const samples: Sample[] = []
     for (let frame = -warmup; frame < iterations; frame++) {

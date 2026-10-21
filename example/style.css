@@ -12,7 +12,7 @@ button, select { font: inherit; color: inherit; background: white; border: 1px s
 button { cursor: pointer; }
 button:hover { border-color: #237b83; }
 button:disabled { opacity: 0.4; cursor: default; }
-.controls > button:first-child { background: #237b83; color: white; border-color: #237b83; min-width: 68px; }
+.controls > button:first-of-type { background: #237b83; color: white; border-color: #237b83; min-width: 68px; }
 label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 input { accent-color: #237b83; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 22px; align-items: start; }
@@ -36,3 +36,8 @@ aside button { margin: 14px 0 24px; }
 .slider input { width: 100%; }
 footer { margin-top: 18px; }
 @media (max-width: 960px) { main { padding: 20px; } header { align-items: start; flex-direction: column; gap: 6px; } .workspace { grid-template-columns: 1fr; } }
+
+.selection { margin: 10px 0; font-size: 13px; font-weight: 600; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+.actions button { margin: 0; font-size: 11px; padding: 6px 8px; }
+.scene [data-unit]:focus-visible { outline: 2px solid #237b83; outline-offset: 4px; }

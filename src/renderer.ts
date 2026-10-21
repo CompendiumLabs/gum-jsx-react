@@ -5,9 +5,9 @@ import { createContext, type ReactNode } from 'react'
 import { LayoutPass, make_size, type Fragment, type Size, type ThemeName } from '@gum-jsx/core'
 import { createMathFonts } from '@gum-jsx/math'
 
-import { renderContainer } from './runtime'
+import { renderContainer, export_svg, publish_snapshot } from './runtime'
 import {
-  appendChild, createHostInstance, createHostText, insertBefore, removeChild, is_host_prop, mark_dirty,
+  appendChild, createHostInstance, createHostText, insertBefore, removeChild, is_host_prop, is_binding_prop, mark_dirty, mark_bindings,
 } from './types'
 import type {
   GumContainer,
@@ -20,6 +20,7 @@ import type {
   GumRenderOptions,
   GumRenderStats,
   GumSize,
+  GumSnapshot,
 } from './types'
 
 let currentUpdatePriority: number = NoEventPriority
@@ -38,6 +39,8 @@ export interface GumRoot {
   setProps: (props?: Record<string, unknown>) => void
   setRenderOptions: (options: GumRenderOptions) => void
   setRenderCallback: (fn?: (svg: string, stats: GumRenderStats) => void) => void
+  subscribe: (listener: () => void) => () => void
+  getSnapshot: () => GumSnapshot | undefined
   getSvg: () => string
   getSize: () => Size
   getFragment: () => Fragment | undefined
@@ -51,10 +54,11 @@ export interface GumRootOptions extends GumRenderOptions {
   fonts?: GumFonts
   props?: Record<string, unknown>
   onRender?: (svg: string, stats: GumRenderStats) => void
+  onError?: (error: unknown) => void
 }
 
 // Supplied fields update together; omitted fields keep their current values.
-export type GumUpdateOptions = Omit<GumRootOptions, 'fonts' | 'onRender'>
+export type GumUpdateOptions = Omit<GumRootOptions, 'fonts' | 'onRender' | 'onError'>
 
 function normalizeType(type: string): GumHostType {
   return (type.startsWith('gum.') ? type : `gum.${type}`) as GumHostType
@@ -81,19 +85,26 @@ function equal_source_props(a: GumHostProps, b: GumHostProps): boolean {
     && keys.every(key => Object.hasOwn(b, key) && Object.is(a[key], b[key]))
 }
 
+function report_error(container: GumContainer, error: unknown): void {
+  container.renderError = error
+  container.onError?.(error)
+}
+
 function flushIfDirty(container: GumContainer): void {
-  if (!container.dirty) return
+  if (!container.dirty && !container.bindings_dirty) return
   try {
-    renderContainer(container)
+    if (container.dirty) renderContainer(container)
+    else publish_snapshot(container)
+    container.dirty = false
   } catch (error) {
-    container.renderError = error
+    // Keep failed geometry dirty: binding-only updates cannot publish it later.
+    report_error(container, error)
   }
-  container.dirty = false
 }
 
 // React commit callbacks record failures; synchronous root calls surface them.
 function finish_render(container: GumContainer): void {
-  flushIfDirty(container)
+  if (!('renderError' in container)) flushIfDirty(container)
   if ('renderError' in container) {
     const error = container.renderError
     delete container.renderError
@@ -120,7 +131,10 @@ const hostConfig: any = {
     isEqualProps(oldProps, newProps) ? null : newProps,
   commitUpdate: (instance: GumHostInstance, _type: string, _oldProps: GumHostProps, newProps: GumHostProps) => {
     const changed = !equal_source_props(instance.props, newProps)
+    const bindings = Object.keys({ ...instance.props, ...newProps })
+      .some(key => is_binding_prop(key) && !Object.is(instance.props[key], newProps[key]))
     instance.props = newProps
+    if (bindings) mark_bindings(instance)
     if (changed) mark_dirty(instance)
   },
   commitTextUpdate: (textInstance: GumHostText, _oldText: string, newText: string) => {
@@ -188,7 +202,7 @@ const GumReconciler = Reconciler(hostConfig)
 function createInternalRoot(container: GumContainer): any {
   return GumReconciler.createContainer(
     container, 0, null, false, null, '',
-    error => { container.renderError = error }, console.error, console.log, () => {},
+    error => report_error(container, error), console.error, console.log, () => {},
   )
 }
 
@@ -210,6 +224,7 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     fonts = createMathFonts(),
     props,
     onRender,
+    onError,
     textMode,
     background,
     title,
@@ -222,11 +237,11 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     pass: new LayoutPass({ fonts: { value: fonts, version: fonts.version ?? 0 } }),
     props,
     rootChildren: [],
-    currentSvg: '',
+    listeners: new Set(), bindings_dirty: true,
     currentSize: make_size(),
     dirty: true,
     generation: 0, values: new WeakMap(), created: 0, reused: 0,
-    onRender,
+    onRender, onError,
   }
   const internalRoot = createInternalRoot(container)
 
@@ -258,6 +273,7 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
   const root: GumRoot = {
     container,
     render(children, options = {}): void {
+      delete container.renderError
       apply_options(options)
       updateInternalRoot(internalRoot, children)
       finish_render(container)
@@ -265,6 +281,7 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     unmount(): void {
       root.render(null)
       container.values = new WeakMap()
+      container.listeners.clear()
     },
     async loadFonts(): Promise<void> {
       await container.fonts.load?.()
@@ -280,7 +297,12 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
       configure({ textMode, background, title, idPrefix, precision })
     },
     setRenderCallback(fn): void { container.onRender = fn },
-    getSvg: () => container.currentSvg,
+    subscribe(listener) {
+      container.listeners.add(listener)
+      return () => { container.listeners.delete(listener) }
+    },
+    getSnapshot: () => container.snapshot,
+    getSvg: () => export_svg(container),
     getSize: () => container.currentSize,
     getFragment: () => container.currentFragment,
     getStats: () => container.stats,

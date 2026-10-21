@@ -12,9 +12,10 @@ import type { PageProps } from '@gum-jsx/core'
 
 import { DEFAULT_ELEMENTS } from './elements'
 import { GUM_CONSTRUCTOR_PROP } from './primitives'
-import { is_host_prop } from './types'
+import { is_host_prop, is_binding_prop } from './types'
 import type {
   GumContainer,
+  GumBindings,
   GumElementConstructor,
   GumHostChild,
   GumHostInstance,
@@ -128,7 +129,7 @@ function instanceToGum(instance: GumHostInstance, container: GumContainer): GumE
     return instance.element
   }
   const constructor = getGumConstructor(container, instance.type, instance.props)
-  const props = toGumProps(instance.props, container)
+  const props = { ...toGumProps(instance.props, container), source_key: instance.source_key }
   const children = instance.children
     .map(child => toGumChild(child, container))
     .filter((child): child is GumElement | string => child != null)
@@ -174,21 +175,64 @@ export function renderContainer(container: GumContainer): void {
   })
   const laid_out = performance.now()
   const after = container.pass.stats
-  const svg = render_svg(fragment, {
-    background: container.background, title: container.title,
-    id_prefix: container.idPrefix, precision: container.precision,
-  })
+  container.currentFragment = fragment
+  container.currentSvg = undefined
+  // Legacy string callbacks explicitly request serialization. DOM subscribers do not.
+  const svg = container.onRender ? export_svg(container) : undefined
   const stats = Object.freeze({
     render: (container.stats?.render ?? 0) + 1,
     created: container.created, reused: container.reused,
     queries: after.queries - before.queries,
     layouts: after.layouts - before.layouts, hits: after.hits - before.hits,
     conversion_ms: converted - start, layout_ms: laid_out - converted,
-    svg_ms: performance.now() - laid_out,
+    svg_ms: svg === undefined ? 0 : performance.now() - laid_out,
   })
-  container.currentSvg = svg
   container.currentSize = fragment.size
   container.currentFragment = fragment
   container.stats = stats
-  container.onRender?.(svg, stats)
+  publish_snapshot(container)
+  if (svg !== undefined) container.onRender?.(svg, stats)
+}
+
+// SVG export is lazy and cached until geometry or output options change.
+export function export_svg(container: GumContainer): string {
+  if (container.currentSvg !== undefined) return container.currentSvg
+  const fragment = container.currentFragment
+  if (!fragment) return ''
+  return container.currentSvg = render_svg(fragment, {
+    background: container.background, title: container.title,
+    id_prefix: container.idPrefix, precision: container.precision,
+  })
+}
+
+// Preserve binding objects and the map itself unless a committed binding changed.
+export function publish_snapshot(container: GumContainer): void {
+  if (!container.currentFragment || !container.stats) return
+  const previous = container.snapshot
+  let bindings = previous?.bindings ?? new Map<string, GumBindings>()
+  if (container.bindings_dirty) {
+    const next = new Map<string, GumBindings>()
+    const visit = (node: GumHostChild) => {
+      if (node.kind === 'text') return
+      const entries = Object.entries(node.props).filter(([key]) => is_binding_prop(key))
+      if (entries.length) {
+        const old = bindings.get(node.source_key)
+        const same = old && Object.keys(old).length === entries.length
+          && entries.every(([key, value]) => Object.is(old[key], value))
+        next.set(node.source_key, same ? old : Object.freeze(Object.fromEntries(entries)))
+      }
+      node.children.forEach(visit)
+    }
+    container.rootChildren.forEach(visit)
+    if (next.size !== bindings.size || [...next].some(([key, value]) => bindings.get(key) !== value)) bindings = next
+  }
+  container.bindings_dirty = false
+  if (previous?.fragment === container.currentFragment && previous.bindings === bindings
+    && previous.stats === container.stats) return
+  const { textMode, background, title, idPrefix, precision } = container
+  container.snapshot = Object.freeze({ revision: (previous?.revision ?? 0) + 1,
+    fragment: container.currentFragment, bindings,
+    options: Object.freeze({ textMode, background, title, idPrefix, precision }), stats: container.stats,
+  })
+  for (const listener of container.listeners) listener()
 }

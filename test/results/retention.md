@@ -54,3 +54,9 @@ The production browser bundle builds, and a rasterized scene was visually checke
 Live controls, DOM timing, browser paint/allocation profiles, and a sustained
 browser run await launching the example. Actual Deadlift trace fixtures remain
 a later addition; this first example intentionally uses small deterministic tracks.
+
+These are historical step-1 measurements, before the DOM/interaction work. The
+current lab adds explicit hit targets, and `test/perf.tsx` explicitly requests SVG
+export to keep its timings inclusive of serialization. Align scene revisions and
+geometry before comparing new headless runs with this table. The lab's backend
+selector compares retained DOM and string insertion using the same current scene.

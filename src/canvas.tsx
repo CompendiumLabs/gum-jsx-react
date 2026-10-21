@@ -1,12 +1,12 @@
-/** @jsxRuntime automatic */
-/** @jsxImportSource react */
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties, PropsWithChildren, ReactNode } from 'react'
 import type { ThemeName } from '@gum-jsx/core'
-
-import { createGumRoot, type GumRoot } from './renderer'
-import type { GumElementRegistry, GumFonts, GumRenderOptions, GumSize } from './types'
-import type { GumRenderStats } from './types'
+import { createGumRoot } from './renderer'
+import type { GumRoot, GumUpdateOptions } from './renderer'
+import { SvgScene } from './svg-dom'
+import { acquire_fonts } from './fonts'
+import type { BrowserFonts } from './fonts'
+import type { GumElementRegistry, GumFonts, GumRenderOptions, GumRenderStats, GumSize } from './types'
 
 export interface GumProps extends GumRenderOptions {
   size?: GumSize
@@ -15,88 +15,98 @@ export interface GumProps extends GumRenderOptions {
   fonts?: GumFonts
   className?: string
   style?: CSSProperties
+  /** Time from output render to layout effect, including React work; excludes paint. */
   onRender?: (stats: GumRenderStats & { dom_ms: number }) => void
+  onError?: (error: unknown) => void
   [key: string]: unknown
 }
 
-type LatestRender = {
-  size: GumSize
-  theme: ThemeName
-  elements?: GumElementRegistry
-  options: GumRenderOptions
-  props: Record<string, unknown>
-  children?: ReactNode
-  onRender?: GumProps['onRender']
+type Host = { root: GumRoot; fonts: BrowserFonts }
+type Input = { root: GumRoot; children: ReactNode; options: GumUpdateOptions }
+
+function same_values(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  const keys = Object.keys(a)
+  return keys.length === Object.keys(b).length && keys.every(key => Object.is(a[key], b[key]))
 }
 
-export function Gum({
-  size = 500,
-  theme = 'light',
-  elements,
-  fonts,
-  className,
-  style,
-  children,
-  textMode,
-  background,
-  title,
-  idPrefix,
-  precision,
-  onRender,
-  ...props
+// Only output subscribes. A committed snapshot never becomes new scene input.
+function Output({ host, onRender }: { host: Host; onRender?: GumProps['onRender'] }) {
+  const snapshot = useSyncExternalStore(host.root.subscribe, host.root.getSnapshot, host.root.getSnapshot)
+  const start = performance.now()
+  const reported = useRef<typeof snapshot>(undefined)
+  useLayoutEffect(() => {
+    if (snapshot && reported.current !== snapshot) {
+      const stats = snapshot.stats
+      const bindings_only = reported.current?.stats === stats
+      reported.current = snapshot
+      onRender?.({ ...stats, ...(bindings_only ? { created: 0, reused: 0, queries: 0, layouts: 0,
+        hits: 0, conversion_ms: 0, layout_ms: 0, svg_ms: 0 } : {}), dom_ms: performance.now() - start })
+    }
+  }, [snapshot, onRender])
+  return snapshot ? <SvgScene snapshot={snapshot} fonts={host.fonts} /> : null
+}
+
+export function Gum({ size = 500, theme = 'light', elements, fonts, className, style,
+  children, textMode, background, title, idPrefix, precision, onRender, onError, ...props
 }: PropsWithChildren<GumProps>) {
-  const hostRef = useRef<HTMLDivElement>(null)
-  const rootRef = useRef<GumRoot | null>(null)
-  // Output options belong to the renderer; remaining props style the source page.
-  const options = { textMode, background, title, idPrefix, precision }
-  const latestRef = useRef<LatestRender>({ size, theme, elements, options, props, children, onRender })
-  latestRef.current = { size, theme, elements, options, props, children, onRender }
+  const host_ref = useRef<HTMLDivElement>(null)
+  const root_ref = useRef<GumRoot | null>(null)
+  const input = useRef<Input | null>(null)
+  const [host, set_host] = useState<Host | null>(null)
+  const [error, set_error] = useState<unknown>(null)
+  const options = { size, theme, elements, props, textMode, background, title, idPrefix, precision }
+  const latest = useRef({ children, options, onError })
+  // Async completions can only see committed inputs, never speculative renders.
+  useLayoutEffect(() => { latest.current = { children, options, onError } })
+
+  // Output/error state changes do not replay unchanged input, including failed input.
+  function update_input(root: GumRoot, children: ReactNode, options: GumUpdateOptions) {
+    const previous = input.current
+    if (previous?.root === root && previous.children === children
+      && same_values({ ...previous.options, props: undefined }, { ...options, props: undefined })
+      && same_values(previous.options.props ?? {}, options.props ?? {})) return
+    input.current = { root, children, options }
+    root.render(children, options)
+    set_error(null)
+  }
 
   useLayoutEffect(() => {
-    const host = hostRef.current
-    if (host == null) return
-    const root = createGumRoot({
-      size, theme, elements, fonts, props, ...options,
-      onRender: (svg, stats) => {
-        if (cancelled) return
-        const start = performance.now()
-        if (svg !== previous_svg) host.innerHTML = svg
-        previous_svg = svg
-        latestRef.current.onRender?.({ ...stats, dom_ms: performance.now() - start })
-      },
-    })
     let cancelled = false
-    let previous_svg = ''
-
-    void root.loadFonts().then(() => {
+    let last_error: unknown
+    const show_error = (error: unknown) => {
+      if (cancelled || error === last_error) return
+      last_error = error
+      set_error(error)
+      latest.current.onError?.(error)
+      if (!latest.current.onError) console.error(error)
+    }
+    const root = createGumRoot({ ...latest.current.options, fonts, onError: show_error })
+    const browser_fonts = acquire_fonts(root.container.fonts, host_ref.current!.ownerDocument)
+    set_error(null)
+    set_host(null)
+    void Promise.all([root.loadFonts(), browser_fonts.ready]).then(() => {
       if (cancelled) return
-      const latest = latestRef.current
-      rootRef.current = root
-      root.render(latest.children, {
-        size: latest.size, theme: latest.theme, elements: latest.elements,
-        props: latest.props, ...latest.options,
-      })
-    }).catch(error => {
-      // Surface asynchronous font failures through the host without leaving stale art.
-      if (!cancelled) {
-        host.innerHTML = ''
-        console.error(error)
-      }
-    })
-
+      root_ref.current = root
+      set_host({ root, fonts: browser_fonts.fonts })
+      update_input(root, latest.current.children, latest.current.options)
+    }).catch(show_error)
     return () => {
       cancelled = true
+      root_ref.current = null
+      input.current = null
       root.unmount()
-      if (rootRef.current === root) rootRef.current = null
-      host.innerHTML = ''
+      browser_fonts.release()
     }
-  }, [fonts])
+  }, [fonts, fonts?.version])
 
   useLayoutEffect(() => {
-    const root = rootRef.current
-    if (root == null) return
-    root.render(children, { size, theme, elements, props, ...options })
+    const root = root_ref.current
+    if (!root) return
+    try { update_input(root, children, options) }
+    catch (error) { root.container.onError?.(error) }
   })
-
-  return <div ref={hostRef} className={className} style={style} />
+  return <div ref={host_ref} className={className} style={style}>
+    {error ? <span role="alert">Unable to render Gum: {String(error)}</span>
+      : host && <Output host={host} onRender={onRender} />}
+  </div>
 }
