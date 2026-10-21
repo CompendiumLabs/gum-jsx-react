@@ -10,6 +10,7 @@ import * as math from '@gum-jsx/math'
 import * as maps from '@gum-jsx/maps'
 import { createGumComponent, createGumRoot, GUM } from '../src/index'
 import Scene from './component'
+import { assert_retention } from './retention'
 
 const ROOT = resolve(import.meta.dir, '..')
 const CLI = './scripts/gum-react.tsx'
@@ -209,3 +210,6 @@ for (const test of [assertPrimitives, assertRendering, assertUpdates, assertMaps
   test()
   console.log(`ok — ${test.name}`)
 }
+
+await assert_retention()
+console.log('ok — assert_retention')

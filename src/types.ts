@@ -1,5 +1,5 @@
 import type {
-  Element, FontProvider, Fonts, OutputPrecision, Size, TextRenderMode, ThemeName,
+  Element, FontProvider, Fonts, Fragment, OutputPrecision, Size, TextRenderMode, ThemeName,
 } from '@gum-jsx/core'
 import type { LayoutPass } from '@gum-jsx/core'
 
@@ -36,9 +36,24 @@ export interface GumHostInstance {
   props: GumHostProps
   children: GumHostChild[]
   parent: GumHostInstance | GumContainer | null
+  element?: Element
+  generation?: number
 }
 
 export type GumHostChild = GumHostInstance | GumHostText
+
+// Per-render work, excluding the host callback and the browser's paint.
+export interface GumRenderStats {
+  render: number
+  created: number
+  reused: number
+  queries: number
+  layouts: number
+  hits: number
+  conversion_ms: number
+  layout_ms: number
+  svg_ms: number
+}
 
 export interface GumContainer extends GumRenderOptions {
   idPrefix: string
@@ -51,9 +66,31 @@ export interface GumContainer extends GumRenderOptions {
   rootChildren: GumHostChild[]
   currentSvg: string
   currentSize: Size
+  currentFragment?: Fragment
+  stats?: GumRenderStats
+  generation: number
+  values: WeakMap<object, unknown>
+  created: number
+  reused: number
   renderError?: unknown
   dirty: boolean
-  onRender?: (svg: string) => void
+  onRender?: (svg: string, stats: GumRenderStats) => void
+}
+
+// React owns child lists and host bindings; only source props enter core.
+export function is_host_prop(key: string): boolean {
+  return key === 'children' || key === 'key' || key === 'ref'
+    || key === '__self' || key === '__source' || /^on[A-Z]/.test(key)
+}
+
+// Rebuild changed ancestors while leaving sibling source identities intact.
+export function mark_dirty(node: GumHostChild | GumContainer): void {
+  let current: GumHostChild | GumContainer | null = node
+  while (current && 'kind' in current) {
+    if (current.kind === 'instance') delete current.element
+    current = current.parent
+  }
+  if (current) current.dirty = true
 }
 
 function isHostInstance(node: GumHostInstance | GumContainer): node is GumHostInstance {
@@ -74,6 +111,7 @@ function detachFromParent(child: GumHostChild): void {
   const list = isHostInstance(parent) ? parent.children : parent.rootChildren
   const index = list.indexOf(child)
   if (index >= 0) list.splice(index, 1)
+  mark_dirty(parent)
   child.parent = null
 }
 
@@ -82,6 +120,7 @@ export function appendChild(parent: GumHostInstance | GumContainer, child: GumHo
   child.parent = parent
   if (isHostInstance(parent)) parent.children.push(child)
   else parent.rootChildren.push(child)
+  mark_dirty(parent)
 }
 
 export function insertBefore(
@@ -95,6 +134,7 @@ export function insertBefore(
   child.parent = parent
   if (index < 0) list.push(child)
   else list.splice(index, 0, child)
+  mark_dirty(parent)
 }
 
 export function removeChild(parent: GumHostInstance | GumContainer, child: GumHostChild): void {
@@ -102,4 +142,5 @@ export function removeChild(parent: GumHostInstance | GumContainer, child: GumHo
   const index = list.indexOf(child)
   if (index >= 0) list.splice(index, 1)
   if (child.parent === parent) child.parent = null
+  mark_dirty(parent)
 }

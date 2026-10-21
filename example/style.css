@@ -1,0 +1,38 @@
+:root { font: 14px/1.5 system-ui, sans-serif; color: #233d48; background: #f2f4ef; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1500px; margin: auto; padding: 32px; }
+header { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+h1 { font-size: 34px; letter-spacing: -1px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 6px; }
+p { margin: 0; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #237b83; }
+.controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+button, select { font: inherit; color: inherit; background: white; border: 1px solid #c8d1c5; border-radius: 6px; padding: 8px 12px; }
+button { cursor: pointer; }
+button:hover { border-color: #237b83; }
+button:disabled { opacity: 0.4; cursor: default; }
+.controls > button:first-child { background: #237b83; color: white; border-color: #237b83; min-width: 68px; }
+label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+input { accent-color: #237b83; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 22px; align-items: start; }
+.scene, aside { background: #fff; border: 1px solid #d4dbd0; border-radius: 10px; overflow: hidden; }
+.scene-bar { padding: 12px 16px; border-bottom: 1px solid #e1e6de; display: flex; justify-content: space-between; font-size: 12px; }
+.scene svg { display: block; width: 100%; height: auto; }
+.scrub { padding: 14px 16px; border-top: 1px solid #e1e6de; }
+.scrub input { width: 100%; }
+aside { padding: 20px; }
+.muted, footer { color: #687b7d; font-size: 12px; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 0; border-bottom: 1px solid #e9ede6; text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: #687b7d; }
+dl { font-size: 12px; margin: 12px 0; }
+dl div { display: flex; justify-content: space-between; gap: 10px; }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+aside button { margin: 14px 0 24px; }
+.slider { display: flex; flex-wrap: wrap; margin: 16px 0 0; }
+.slider output { margin-left: auto; }
+.slider input { width: 100%; }
+footer { margin-top: 18px; }
+@media (max-width: 960px) { main { padding: 20px; } header { align-items: start; flex-direction: column; gap: 6px; } .workspace { grid-template-columns: 1fr; } }

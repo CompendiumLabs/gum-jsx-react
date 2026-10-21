@@ -2,7 +2,7 @@ export { createGumRoot } from './renderer'
 export { Gum } from './canvas'
 export { GUM, createGumComponent } from './primitives'
 
-export type { GumRoot, GumRootOptions } from './renderer'
+export type { GumRoot, GumRootOptions, GumUpdateOptions } from './renderer'
 export type { GumProps } from './canvas'
 export type { GumElements, GumPrimitiveComponent } from './primitives'
 export type {
@@ -16,5 +16,6 @@ export type {
   GumHostText,
   GumHostType,
   GumRenderOptions,
+  GumRenderStats,
   GumSize,
 } from './types'

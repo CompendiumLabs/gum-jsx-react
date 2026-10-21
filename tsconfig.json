@@ -11,6 +11,6 @@
     "skipLibCheck": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts", "scripts/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts", "scripts/**/*.tsx", "test/**/*.ts", "test/**/*.tsx", "example/**/*.ts", "example/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

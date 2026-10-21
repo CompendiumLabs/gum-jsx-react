@@ -2,21 +2,23 @@ import Reconciler from 'react-reconciler'
 import { DefaultEventPriority, NoEventPriority } from 'react-reconciler/constants'
 import { version } from '../package.json'
 import { createContext, type ReactNode } from 'react'
-import { LayoutPass, make_size, type Size, type ThemeName } from '@gum-jsx/core'
+import { LayoutPass, make_size, type Fragment, type Size, type ThemeName } from '@gum-jsx/core'
 import { createMathFonts } from '@gum-jsx/math'
 
 import { renderContainer } from './runtime'
-import { appendChild, createHostInstance, createHostText, insertBefore, removeChild } from './types'
+import {
+  appendChild, createHostInstance, createHostText, insertBefore, removeChild, is_host_prop, mark_dirty,
+} from './types'
 import type {
   GumContainer,
   GumElementRegistry,
   GumFonts,
-  GumHostChild,
   GumHostInstance,
   GumHostProps,
   GumHostText,
   GumHostType,
   GumRenderOptions,
+  GumRenderStats,
   GumSize,
 } from './types'
 
@@ -27,7 +29,7 @@ const NOOP = () => {}
 
 export interface GumRoot {
   container: GumContainer
-  render: (children: ReactNode) => void
+  render: (children: ReactNode, options?: GumUpdateOptions) => void
   unmount: () => void
   loadFonts: () => Promise<void>
   setSize: (size: GumSize) => void
@@ -35,9 +37,11 @@ export interface GumRoot {
   setElements: (elements?: GumElementRegistry) => void
   setProps: (props?: Record<string, unknown>) => void
   setRenderOptions: (options: GumRenderOptions) => void
-  setRenderCallback: (fn?: (svg: string) => void) => void
+  setRenderCallback: (fn?: (svg: string, stats: GumRenderStats) => void) => void
   getSvg: () => string
   getSize: () => Size
+  getFragment: () => Fragment | undefined
+  getStats: () => GumRenderStats | undefined
 }
 
 export interface GumRootOptions extends GumRenderOptions {
@@ -46,8 +50,11 @@ export interface GumRootOptions extends GumRenderOptions {
   elements?: GumElementRegistry
   fonts?: GumFonts
   props?: Record<string, unknown>
-  onRender?: (svg: string) => void
+  onRender?: (svg: string, stats: GumRenderStats) => void
 }
+
+// Supplied fields update together; omitted fields keep their current values.
+export type GumUpdateOptions = Omit<GumRootOptions, 'fonts' | 'onRender'>
 
 function normalizeType(type: string): GumHostType {
   return (type.startsWith('gum.') ? type : `gum.${type}`) as GumHostType
@@ -56,7 +63,7 @@ function normalizeType(type: string): GumHostType {
 function isEqualProps(a: GumHostProps, b: GumHostProps): boolean {
   const aKeys = Object.keys(a)
   const bKeys = Object.keys(b)
-  return aKeys.length === bKeys.length && aKeys.every(key => a[key] === b[key])
+  return aKeys.length === bKeys.length && aKeys.every(key => Object.hasOwn(b, key) && Object.is(a[key], b[key]))
 }
 
 function sizeEquals(a: GumSize, b: GumSize): boolean {
@@ -67,12 +74,11 @@ function sizeEquals(a: GumSize, b: GumSize): boolean {
   return aw === bw && ah === bh
 }
 
-function markRootDirty(node: GumHostChild): void {
-  let current = node.parent
-  while ((current as GumHostInstance | null)?.kind === 'instance') {
-    current = (current as GumHostInstance).parent
-  }
-  if (current != null) (current as GumContainer).dirty = true
+// Children are reconciled separately; host-only bindings never affect geometry.
+function equal_source_props(a: GumHostProps, b: GumHostProps): boolean {
+  const keys = Object.keys(a).filter(key => !is_host_prop(key))
+  return keys.length === Object.keys(b).filter(key => !is_host_prop(key)).length
+    && keys.every(key => Object.hasOwn(b, key) && Object.is(a[key], b[key]))
 }
 
 function flushIfDirty(container: GumContainer): void {
@@ -108,43 +114,27 @@ const hostConfig: any = {
   shouldSetTextContent: () => false,
   createInstance: (type: string, props: GumHostProps) => createHostInstance(normalizeType(type), props),
   createTextInstance: (text: string) => createHostText(text),
-  appendInitialChild: (parent: GumHostInstance, child: GumHostChild) => appendChild(parent, child),
+  appendInitialChild: appendChild,
   finalizeInitialChildren: () => false,
   prepareUpdate: (_instance: GumHostInstance, _type: string, oldProps: GumHostProps, newProps: GumHostProps) =>
     isEqualProps(oldProps, newProps) ? null : newProps,
   commitUpdate: (instance: GumHostInstance, _type: string, _oldProps: GumHostProps, newProps: GumHostProps) => {
-    if (newProps != null) instance.props = newProps
-    markRootDirty(instance)
+    const changed = !equal_source_props(instance.props, newProps)
+    instance.props = newProps
+    if (changed) mark_dirty(instance)
   },
   commitTextUpdate: (textInstance: GumHostText, _oldText: string, newText: string) => {
     textInstance.text = newText
-    markRootDirty(textInstance)
+    mark_dirty(textInstance)
   },
-  appendChild: (parent: GumHostInstance, child: GumHostChild) => {
-    appendChild(parent, child)
-    markRootDirty(parent)
-  },
-  appendChildToContainer: (container: GumContainer, child: GumHostChild) => {
-    appendChild(container, child)
-    container.dirty = true
-  },
-  insertBefore: (parent: GumHostInstance, child: GumHostChild, beforeChild: GumHostChild) => {
-    insertBefore(parent, child, beforeChild)
-    markRootDirty(parent)
-  },
-  insertInContainerBefore: (container: GumContainer, child: GumHostChild, beforeChild: GumHostChild) => {
-    insertBefore(container, child, beforeChild)
-    container.dirty = true
-  },
-  removeChild: (parent: GumHostInstance, child: GumHostChild) => {
-    removeChild(parent, child)
-    markRootDirty(parent)
-  },
-  removeChildFromContainer: (container: GumContainer, child: GumHostChild) => {
-    removeChild(container, child)
-    container.dirty = true
-  },
+  appendChild,
+  appendChildToContainer: appendChild,
+  insertBefore,
+  insertInContainerBefore: insertBefore,
+  removeChild,
+  removeChildFromContainer: removeChild,
   clearContainer: (container: GumContainer) => {
+    for (const child of container.rootChildren) child.parent = null
     container.rootChildren = []
     container.dirty = true
     return false
@@ -235,59 +225,65 @@ export function createGumRoot(options: GumRootOptions = {}): GumRoot {
     currentSvg: '',
     currentSize: make_size(),
     dirty: true,
+    generation: 0, values: new WeakMap(), created: 0, reused: 0,
     onRender,
   }
   const internalRoot = createInternalRoot(container)
 
+  // Configuration is applied before reconciling children, with one final output.
+  function apply_options(options: GumUpdateOptions): void {
+    for (const key of Object.keys(options) as (keyof GumUpdateOptions)[]) {
+      let value = options[key]
+      if (key === 'idPrefix' && value === undefined) value = default_prefix
+      if (key === 'size' && value === undefined) value = 500
+      const previous = container[key]
+      const same = key === 'size' ? sizeEquals(previous as GumSize, value as GumSize)
+        : key === 'props' ? isEqualProps(previous as GumHostProps ?? {}, value as GumHostProps ?? {})
+        : Object.is(previous, value)
+      if (same) continue
+      Object.assign(container, { [key]: value })
+      if (key === 'elements') {
+        container.generation++
+        container.values = new WeakMap()
+      }
+      container.dirty = true
+    }
+  }
+
+  function configure(options: GumUpdateOptions): void {
+    apply_options(options)
+    finish_render(container)
+  }
+
   const root: GumRoot = {
     container,
-    render(children): void {
+    render(children, options = {}): void {
+      apply_options(options)
       updateInternalRoot(internalRoot, children)
       finish_render(container)
     },
     unmount(): void {
-      updateInternalRoot(internalRoot, null)
-      finish_render(container)
+      root.render(null)
+      container.values = new WeakMap()
     },
     async loadFonts(): Promise<void> {
       await container.fonts.load?.()
       container.pass.set_resource('fonts', container.fonts, container.fonts.version ?? 0)
-    },
-    setSize(nextSize): void {
-      if (sizeEquals(container.size, nextSize)) return
-      container.size = nextSize
       container.dirty = true
-      finish_render(container)
     },
-    setTheme(nextTheme): void {
-      if (container.theme === nextTheme) return
-      container.theme = nextTheme
-      container.dirty = true
-      finish_render(container)
-    },
-    setElements(nextElements): void {
-      if (container.elements === nextElements) return
-      container.elements = nextElements
-      container.dirty = true
-      finish_render(container)
-    },
-    setProps(nextProps): void {
-      if (isEqualProps(container.props ?? {}, nextProps ?? {})) return
-      container.props = nextProps
-      container.dirty = true
-      finish_render(container)
-    },
-    // Replace output settings without remounting the React tree or reloading fonts.
+    setSize: size => configure({ size }),
+    setTheme: theme => configure({ theme }),
+    setElements: elements => configure({ elements }),
+    setProps: props => configure({ props }),
+    // This setter replaces output settings; render's optional settings are a patch.
     setRenderOptions({ textMode, background, title, idPrefix = default_prefix, precision }): void {
-      const next = { textMode, background, title, idPrefix, precision }
-      if (Object.entries(next).every(([key, value]) => container[key as keyof GumRenderOptions] === value)) return
-      Object.assign(container, next)
-      container.dirty = true
-      finish_render(container)
+      configure({ textMode, background, title, idPrefix, precision })
     },
     setRenderCallback(fn): void { container.onRender = fn },
     getSvg: () => container.currentSvg,
     getSize: () => container.currentSize,
+    getFragment: () => container.currentFragment,
+    getStats: () => container.stats,
   }
   return root
 }

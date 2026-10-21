@@ -83,6 +83,44 @@ For headless roots, `root.setRenderOptions(options)` replaces these settings;
 omitted options return to their defaults. Uncaught component and layout errors
 propagate from synchronous root calls, and `gum-react` exits unsuccessfully.
 
+## Repeated updates
+
+Unchanged host subtrees retain their core elements and can reuse the shared layout
+pass. React keys preserve sibling identity across reordering. Treat data props,
+element-valued props, and callback captures as immutable; replace changed values
+and memoize stable arrays or records. Mutating an object in place does not request
+an update. Construction callbacks are not called again solely because a parent
+rerenders. Host `onX` bindings and refs are kept out of core source data; attaching
+events to SVG output is a later renderer phase.
+
+Update children and configuration together with the second `render` argument:
+
+```tsx
+root.render(<Scene />, {
+  size: [800, 450],
+  theme: 'light',
+  title: 'Updated scene',
+})
+```
+
+Supplied fields update together; omitted fields retain their values. The `props`
+field replaces page props as a whole. An explicit `undefined` clears an optional
+setting (`size` returns to 500 and `idPrefix` to the root's generated prefix). Existing setters
+remain immediate; `setRenderOptions` still replaces the complete output options.
+`<Gum>` uses the combined update path automatically.
+
+`root.getFragment()` returns the latest immutable layout result, and
+`root.getStats()` returns its render number, converted/reused source counts,
+layout counters, and `conversion_ms`, `layout_ms`, and `svg_ms` timings. Before the
+first output both return `undefined`; a no-op update leaves the latest result and
+statistics unchanged. The root's `onRender(svg, stats)` callback runs after output.
+`<Gum onRender={stats => ...}>` reports the same counters plus synchronous `dom_ms`.
+These callbacks are for observation; avoid feeding each sample straight back into
+the scene being measured. Browser paint is outside the recorded stage timings.
+
+The [replay lab](example/README.md) provides a browser scene and a headless benchmark
+for iterating on interactive rendering.
+
 ## Fonts and emoji
 
 Text is outlined by default, so figures need no page fonts. Emoji are the exception: core

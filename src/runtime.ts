@@ -5,12 +5,14 @@ import {
   exact,
   make_request,
   px,
-  render_element,
+  layout_element,
+  render_svg,
 } from '@gum-jsx/core'
 import type { PageProps } from '@gum-jsx/core'
 
 import { DEFAULT_ELEMENTS } from './elements'
 import { GUM_CONSTRUCTOR_PROP } from './primitives'
+import { is_host_prop } from './types'
 import type {
   GumContainer,
   GumElementConstructor,
@@ -18,15 +20,6 @@ import type {
   GumHostInstance,
   GumHostProps,
 } from './types'
-
-const RESERVED_PROPS = new Set([
-  'children',
-  'key',
-  'ref',
-  '__self',
-  '__source',
-  GUM_CONSTRUCTOR_PROP,
-])
 
 function isReactElement(value: unknown): value is ReactElement {
   return value != null && typeof value === 'object'
@@ -77,7 +70,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 // Props such as ticks and legends nest elements inside arrays and records.
 // Untouched data keeps its identity, so lengths and plain values pass through as-is.
-function toGumValue(value: unknown, container: GumContainer): unknown {
+function convert_value(value: unknown, container: GumContainer): unknown {
   if (typeof value === 'function') {
     return (...args: unknown[]) => toGumValue((value as Function)(...args), container)
   }
@@ -91,6 +84,16 @@ function toGumValue(value: unknown, container: GumContainer): unknown {
     return entries.some(([key, item]) => item !== value[key]) ? Object.fromEntries(entries) : value
   }
   return value
+}
+
+// Inputs are immutable, including callback captures. Cache only by identity.
+function toGumValue(value: unknown, container: GumContainer): unknown {
+  if (value === null || (typeof value !== 'object' && typeof value !== 'function')) return value
+  const key = value as object
+  if (container.values.has(key)) return container.values.get(key)
+  const converted = convert_value(value, container)
+  container.values.set(key, converted)
+  return converted
 }
 
 function toGumKey(key: string): string {
@@ -113,19 +116,27 @@ function reactChildrenToGum(children: ReactNode, container: GumContainer): (GumE
 function toGumProps(props: GumHostProps, container: GumContainer): Record<string, unknown> {
   const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(props)) {
-    if (RESERVED_PROPS.has(key)) continue
+    if (is_host_prop(key) || key === GUM_CONSTRUCTOR_PROP) continue
     result[toGumKey(key)] = toGumValue(value, container)
   }
   return result
 }
 
 function instanceToGum(instance: GumHostInstance, container: GumContainer): GumElement {
+  if (instance.element && instance.generation === container.generation) {
+    container.reused++
+    return instance.element
+  }
   const constructor = getGumConstructor(container, instance.type, instance.props)
   const props = toGumProps(instance.props, container)
   const children = instance.children
     .map(child => toGumChild(child, container))
     .filter((child): child is GumElement | string => child != null)
-  return new constructor(children.length > 0 ? { ...props, children } : props)
+  const element = new constructor(children.length > 0 ? { ...props, children } : props)
+  instance.element = element
+  instance.generation = container.generation
+  container.created++
+  return element
 }
 
 function toGumChild(child: GumHostChild, container: GumContainer): GumElement | string | null {
@@ -139,6 +150,9 @@ function viewportRequest(size: GumContainer['size']) {
 }
 
 export function renderContainer(container: GumContainer): void {
+  const start = performance.now()
+  container.created = 0
+  container.reused = 0
   const children = container.rootChildren
     .map(child => toGumChild(child, container))
     .filter((child): child is GumElement => child instanceof GumElement)
@@ -149,18 +163,32 @@ export function renderContainer(container: GumContainer): void {
     : {}
   // Root props, bounds, and the container theme win over a source Page's own props.
   // The shared pass keeps its cache; fonts loaded since the last render refresh it.
-  const { svg, size } = render_element(content, {
+  const converted = performance.now()
+  const before = container.pass.stats
+  const { fragment } = layout_element(content, {
     request: viewportRequest(container.size),
     overrides: { ...props, ...bounds, theme: container.theme } as PageProps,
     text_mode: container.textMode,
-    background: container.background,
-    title: container.title,
-    id_prefix: container.idPrefix,
-    precision: container.precision,
     pass: container.pass,
     fonts: container.fonts,
   })
+  const laid_out = performance.now()
+  const after = container.pass.stats
+  const svg = render_svg(fragment, {
+    background: container.background, title: container.title,
+    id_prefix: container.idPrefix, precision: container.precision,
+  })
+  const stats = Object.freeze({
+    render: (container.stats?.render ?? 0) + 1,
+    created: container.created, reused: container.reused,
+    queries: after.queries - before.queries,
+    layouts: after.layouts - before.layouts, hits: after.hits - before.hits,
+    conversion_ms: converted - start, layout_ms: laid_out - converted,
+    svg_ms: performance.now() - laid_out,
+  })
   container.currentSvg = svg
-  container.currentSize = size
-  container.onRender?.(svg)
+  container.currentSize = fragment.size
+  container.currentFragment = fragment
+  container.stats = stats
+  container.onRender?.(svg, stats)
 }

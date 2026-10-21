@@ -1,0 +1,712 @@
+{
+  "baseline": {
+    "date": "2026-10-20T22:47:07.861Z",
+    "runtime": "Bun 1.4.3",
+    "cpu": "AMD Ryzen 9 7900X 12-Core Processor",
+    "revision": "c7ec2fc6bc5a580c2d9be76396bb48aba48c768a",
+    "production": true,
+    "freeze": false,
+    "warmup": 10,
+    "iterations": 40,
+    "viewport": [
+      960,
+      538
+    ],
+    "labels": true,
+    "trails": true,
+    "note": "Warm headless React \u2192 SVG. Excludes browser DOM insertion, paint, and first-load costs.",
+    "results": [
+      {
+        "count": 32,
+        "motion": "none",
+        "total_ms": {
+          "median": 5.683,
+          "p95": 8.028
+        },
+        "conversion_ms": {
+          "median": 1.646,
+          "p95": 3.489
+        },
+        "layout_ms": {
+          "median": 2.954,
+          "p95": 4.884
+        },
+        "svg_ms": {
+          "median": 0.926,
+          "p95": 1.436
+        },
+        "created": {
+          "median": 130,
+          "p95": 130
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 131,
+          "p95": 131
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 32,
+        "motion": "one",
+        "total_ms": {
+          "median": 4.714,
+          "p95": 6.36
+        },
+        "conversion_ms": {
+          "median": 1.43,
+          "p95": 2.981
+        },
+        "layout_ms": {
+          "median": 2.287,
+          "p95": 3.818
+        },
+        "svg_ms": {
+          "median": 0.828,
+          "p95": 0.939
+        },
+        "created": {
+          "median": 130,
+          "p95": 130
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 131,
+          "p95": 131
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 32,
+        "motion": "all",
+        "total_ms": {
+          "median": 4.684,
+          "p95": 6.582
+        },
+        "conversion_ms": {
+          "median": 1.383,
+          "p95": 3.007
+        },
+        "layout_ms": {
+          "median": 2.181,
+          "p95": 3.927
+        },
+        "svg_ms": {
+          "median": 0.888,
+          "p95": 1.06
+        },
+        "created": {
+          "median": 130,
+          "p95": 130
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 131,
+          "p95": 131
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 128,
+        "motion": "none",
+        "total_ms": {
+          "median": 15.296,
+          "p95": 19.261
+        },
+        "conversion_ms": {
+          "median": 3.427,
+          "p95": 8.385
+        },
+        "layout_ms": {
+          "median": 7.983,
+          "p95": 11.217
+        },
+        "svg_ms": {
+          "median": 3.187,
+          "p95": 5.217
+        },
+        "created": {
+          "median": 514,
+          "p95": 514
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 515,
+          "p95": 515
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 128,
+        "motion": "one",
+        "total_ms": {
+          "median": 16.652,
+          "p95": 21.263
+        },
+        "conversion_ms": {
+          "median": 3.507,
+          "p95": 8.869
+        },
+        "layout_ms": {
+          "median": 8.419,
+          "p95": 11.139
+        },
+        "svg_ms": {
+          "median": 3.466,
+          "p95": 3.833
+        },
+        "created": {
+          "median": 514,
+          "p95": 514
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 515,
+          "p95": 515
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 128,
+        "motion": "all",
+        "total_ms": {
+          "median": 17.769,
+          "p95": 22.392
+        },
+        "conversion_ms": {
+          "median": 3.716,
+          "p95": 7.315
+        },
+        "layout_ms": {
+          "median": 8.609,
+          "p95": 12.722
+        },
+        "svg_ms": {
+          "median": 3.545,
+          "p95": 4.322
+        },
+        "created": {
+          "median": 514,
+          "p95": 514
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 515,
+          "p95": 515
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 512,
+        "motion": "none",
+        "total_ms": {
+          "median": 62.222,
+          "p95": 70.243
+        },
+        "conversion_ms": {
+          "median": 12.34,
+          "p95": 17.46
+        },
+        "layout_ms": {
+          "median": 33.757,
+          "p95": 38.526
+        },
+        "svg_ms": {
+          "median": 14.43,
+          "p95": 19.183
+        },
+        "created": {
+          "median": 2050,
+          "p95": 2050
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 2051,
+          "p95": 2051
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 512,
+        "motion": "one",
+        "total_ms": {
+          "median": 63.907,
+          "p95": 75.007
+        },
+        "conversion_ms": {
+          "median": 11.751,
+          "p95": 17.861
+        },
+        "layout_ms": {
+          "median": 34.057,
+          "p95": 41.235
+        },
+        "svg_ms": {
+          "median": 16.29,
+          "p95": 25.46
+        },
+        "created": {
+          "median": 2050,
+          "p95": 2050
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 2051,
+          "p95": 2051
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 512,
+        "motion": "all",
+        "total_ms": {
+          "median": 67.935,
+          "p95": 73.115
+        },
+        "conversion_ms": {
+          "median": 12.115,
+          "p95": 17.657
+        },
+        "layout_ms": {
+          "median": 33.394,
+          "p95": 40.269
+        },
+        "svg_ms": {
+          "median": 16.245,
+          "p95": 21.745
+        },
+        "created": {
+          "median": 2050,
+          "p95": 2050
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 2051,
+          "p95": 2051
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      }
+    ]
+  },
+  "retained": {
+    "date": "2026-10-20T22:47:40.177Z",
+    "runtime": "Bun 1.4.3",
+    "cpu": "AMD Ryzen 9 7900X 12-Core Processor",
+    "revision": "phase-01-working-tree",
+    "production": true,
+    "freeze": false,
+    "warmup": 10,
+    "iterations": 40,
+    "viewport": [
+      960,
+      538
+    ],
+    "labels": true,
+    "trails": true,
+    "note": "Warm headless React \u2192 SVG. Excludes browser DOM insertion, paint, and first-load costs.",
+    "results": [
+      {
+        "count": 32,
+        "motion": "none",
+        "total_ms": {
+          "median": 0.035,
+          "p95": 0.06
+        },
+        "conversion_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "layout_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "svg_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "created": {
+          "median": 0,
+          "p95": 0
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 0,
+          "p95": 0
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 32,
+        "motion": "one",
+        "total_ms": {
+          "median": 1.323,
+          "p95": 1.541
+        },
+        "conversion_ms": {
+          "median": 0.04,
+          "p95": 0.053
+        },
+        "layout_ms": {
+          "median": 0.404,
+          "p95": 0.456
+        },
+        "svg_ms": {
+          "median": 0.791,
+          "p95": 1.037
+        },
+        "created": {
+          "median": 3,
+          "p95": 3
+        },
+        "reused": {
+          "median": 65,
+          "p95": 65
+        },
+        "layouts": {
+          "median": 4,
+          "p95": 4
+        },
+        "hits": {
+          "median": 65,
+          "p95": 65
+        }
+      },
+      {
+        "count": 32,
+        "motion": "all",
+        "total_ms": {
+          "median": 2.746,
+          "p95": 5.69
+        },
+        "conversion_ms": {
+          "median": 0.478,
+          "p95": 1.005
+        },
+        "layout_ms": {
+          "median": 1.113,
+          "p95": 2.269
+        },
+        "svg_ms": {
+          "median": 0.893,
+          "p95": 0.984
+        },
+        "created": {
+          "median": 65,
+          "p95": 65
+        },
+        "reused": {
+          "median": 65,
+          "p95": 65
+        },
+        "layouts": {
+          "median": 66,
+          "p95": 66
+        },
+        "hits": {
+          "median": 65,
+          "p95": 65
+        }
+      },
+      {
+        "count": 128,
+        "motion": "none",
+        "total_ms": {
+          "median": 0.027,
+          "p95": 0.042
+        },
+        "conversion_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "layout_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "svg_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "created": {
+          "median": 0,
+          "p95": 0
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 0,
+          "p95": 0
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 128,
+        "motion": "one",
+        "total_ms": {
+          "median": 3.721,
+          "p95": 5.593
+        },
+        "conversion_ms": {
+          "median": 0.041,
+          "p95": 0.058
+        },
+        "layout_ms": {
+          "median": 1.044,
+          "p95": 1.165
+        },
+        "svg_ms": {
+          "median": 2.572,
+          "p95": 4.24
+        },
+        "created": {
+          "median": 3,
+          "p95": 3
+        },
+        "reused": {
+          "median": 257,
+          "p95": 257
+        },
+        "layouts": {
+          "median": 4,
+          "p95": 4
+        },
+        "hits": {
+          "median": 257,
+          "p95": 257
+        }
+      },
+      {
+        "count": 128,
+        "motion": "all",
+        "total_ms": {
+          "median": 11.547,
+          "p95": 20.769
+        },
+        "conversion_ms": {
+          "median": 2.24,
+          "p95": 6.997
+        },
+        "layout_ms": {
+          "median": 4.392,
+          "p95": 9.466
+        },
+        "svg_ms": {
+          "median": 3.291,
+          "p95": 8.811
+        },
+        "created": {
+          "median": 257,
+          "p95": 257
+        },
+        "reused": {
+          "median": 257,
+          "p95": 257
+        },
+        "layouts": {
+          "median": 258,
+          "p95": 258
+        },
+        "hits": {
+          "median": 257,
+          "p95": 257
+        }
+      },
+      {
+        "count": 512,
+        "motion": "none",
+        "total_ms": {
+          "median": 0.068,
+          "p95": 0.089
+        },
+        "conversion_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "layout_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "svg_ms": {
+          "median": 0,
+          "p95": 0
+        },
+        "created": {
+          "median": 0,
+          "p95": 0
+        },
+        "reused": {
+          "median": 0,
+          "p95": 0
+        },
+        "layouts": {
+          "median": 0,
+          "p95": 0
+        },
+        "hits": {
+          "median": 0,
+          "p95": 0
+        }
+      },
+      {
+        "count": 512,
+        "motion": "one",
+        "total_ms": {
+          "median": 17.408,
+          "p95": 20.864
+        },
+        "conversion_ms": {
+          "median": 0.128,
+          "p95": 0.219
+        },
+        "layout_ms": {
+          "median": 4.812,
+          "p95": 7.892
+        },
+        "svg_ms": {
+          "median": 12.171,
+          "p95": 13.342
+        },
+        "created": {
+          "median": 3,
+          "p95": 3
+        },
+        "reused": {
+          "median": 1025,
+          "p95": 1025
+        },
+        "layouts": {
+          "median": 4,
+          "p95": 4
+        },
+        "hits": {
+          "median": 1025,
+          "p95": 1025
+        }
+      },
+      {
+        "count": 512,
+        "motion": "all",
+        "total_ms": {
+          "median": 51.341,
+          "p95": 78.739
+        },
+        "conversion_ms": {
+          "median": 9.127,
+          "p95": 26.088
+        },
+        "layout_ms": {
+          "median": 18.778,
+          "p95": 39.521
+        },
+        "svg_ms": {
+          "median": 14.316,
+          "p95": 29.605
+        },
+        "created": {
+          "median": 1025,
+          "p95": 1025
+        },
+        "reused": {
+          "median": 1025,
+          "p95": 1025
+        },
+        "layouts": {
+          "median": 1026,
+          "p95": 1026
+        },
+        "hits": {
+          "median": 1025,
+          "p95": 1025
+        }
+      }
+    ]
+  },
+  "resize_probe": {
+    "description": "32 retained circles, 1,600 distinct fractional widths, explicit GC before each heap measurement",
+    "widths": [
+      0,
+      400,
+      800,
+      1200,
+      1600
+    ],
+    "unbounded_heap_bytes": [
+      9755060,
+      30341682,
+      48230141,
+      71259992,
+      89615728
+    ],
+    "bounded_heap_bytes": [
+      9772963,
+      13448333,
+      13435336,
+      13445663,
+      13480023
+    ]
+  }
+}

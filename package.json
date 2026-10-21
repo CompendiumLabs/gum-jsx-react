@@ -14,7 +14,9 @@
   "scripts": {
     "gum-react": "bun scripts/gum-react.tsx",
     "test": "bun test/run.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "example": "bun --hot example/server.ts",
+    "example:production": "NODE_ENV=production bun example/server.ts --production"
   },
   "dependencies": {
     "@gum-jsx/core": "2.1.0",
