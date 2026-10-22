@@ -2,7 +2,7 @@ import { createContext, memo, useContext, useId, useLayoutEffect, useMemo, useRe
 import type { SVGProps } from 'react'
 import type { Drawing, Fragment, Placement, PixelRect, RectRadii, PathCommand } from '@gum-jsx/core'
 import { prepare_render, output_number_formatter, path_data, rect_path, svg_font_family } from '@gum-jsx/core/output'
-import type { GumBindings, GumSnapshot } from './types'
+import type { GumBindings, GumRenderOptions, GumSnapshot } from './types'
 import { occurrence_handle } from './interaction'
 import type { GumHandle } from './interaction'
 import type { BrowserFonts } from './fonts'
@@ -15,7 +15,7 @@ const identity = [1, 0, 0, 1, 0, 0]
 type Output = ReturnType<typeof make_output>
 
 // A live output owns weak path caches and a bounded numeric formatter.
-function make_output(precision: GumSnapshot['options']['precision'], prefix: string, fonts?: BrowserFonts) {
+function make_output(precision: GumRenderOptions['precision'], prefix: string, fonts?: BrowserFonts) {
   const number = output_number_formatter(precision)
   const paths = new WeakMap<readonly PathCommand[], string>()
   return { number, prefix, fonts, path(commands: readonly PathCommand[]) {
@@ -140,23 +140,44 @@ const Occurrence = memo(function Occurrence({ fragment, offset, transform, outpu
   && a.offset.x === b.offset.x && a.offset.y === b.offset.y
   && identity.every((value, i) => (a.transform?.[i] ?? value) === (b.transform?.[i] ?? value)))
 
-// This component is also useful for embedding an already committed snapshot.
-export function SvgScene({ snapshot, fonts }: { snapshot: GumSnapshot; fonts?: BrowserFonts }) {
-  const { fragment, options, bindings } = snapshot
+export interface GumFragmentProps extends Omit<GumRenderOptions, 'textMode'> {
+  fragment: Fragment
+  className?: SVGProps<SVGSVGElement>['className']
+  style?: SVGProps<SVGSVGElement>['style']
+}
+
+type SceneProps = GumFragmentProps & {
+  bindings?: ReadonlyMap<string, GumBindings>
+  fonts?: BrowserFonts
+}
+
+// Both entry points share drawing conversion, stable occurrences, and definition IDs.
+function Scene({ fragment, background, title, idPrefix = 'gum', precision,
+  className, style, bindings = empty_bindings, fonts }: SceneProps) {
   const root_id = useId().replace(/[^\w-]/g, '_')
-  const prefix = `${options.idPrefix ?? 'gum'}-${root_id}`
-  const output = useMemo(() => make_output(options.precision, prefix, fonts), [options.precision, prefix, fonts])
+  const prefix = `${idPrefix}-${root_id}`
+  const output = useMemo(() => make_output(precision, prefix, fonts), [precision, prefix, fonts])
   const prepared = useMemo(() => prepare_render(fragment), [fragment])
   const n = output.number
   const { width, height } = fragment.size
-  if (!/^[A-Za-z_][A-Za-z0-9_.-]*$/.test(options.idPrefix ?? 'gum')) throw new TypeError('SVG idPrefix must be an identifier')
+  if (!/^[A-Za-z_][A-Za-z0-9_.-]*$/.test(idPrefix)) throw new TypeError('SVG idPrefix must be an identifier')
   return <Bindings.Provider value={bindings}>
     <svg xmlns="http://www.w3.org/2000/svg" width={n(width)} height={n(height)}
-      viewBox={`0 0 ${n(width)} ${n(height)}`} overflow="hidden"
+      viewBox={`0 0 ${n(width)} ${n(height)}`} overflow="hidden" className={className} style={style}
       textAnchor="start" fontWeight={400} fontStyle="normal" xmlSpace="preserve">
-      {options.title !== undefined && <title>{options.title}</title>}
-      {options.background !== undefined && <rect width={n(width)} height={n(height)} fill={options.background} />}
+      {title !== undefined && <title>{title}</title>}
+      {background !== undefined && <rect width={n(width)} height={n(height)} fill={background} />}
       <Occurrence fragment={prepared} offset={origin} output={output} />
     </svg>
   </Bindings.Provider>
+}
+
+// Display an already laid-out fragment. The host owns live font registration.
+export function GumFragment(props: GumFragmentProps) {
+  return <Scene {...props} />
+}
+
+// Committed React scenes additionally carry interaction bindings and browser fonts.
+export function SvgScene({ snapshot, fonts }: { snapshot: GumSnapshot; fonts?: BrowserFonts }) {
+  return <Scene fragment={snapshot.fragment} {...snapshot.options} bindings={snapshot.bindings} fonts={fonts} />
 }

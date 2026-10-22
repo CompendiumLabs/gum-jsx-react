@@ -1,11 +1,11 @@
 import { act, StrictMode, useState, useSyncExternalStore } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
-  Fonts, define_element, element_children, make_fragment, place_fragment, make_size,
+  Evaluator, layout_element, render_svg, Fonts, define_element, element_children, make_fragment, place_fragment, make_size,
   draw_rect, draw_path, draw_image, make_rect, make_point, px,
 } from '@gum-jsx/core'
 import type { ElementProps, PathCommand } from '@gum-jsx/core'
-import { Gum, GUM, createGumRoot, createGumComponent, local_point } from '../src/index'
+import { Gum, GumFragment, GUM, createGumRoot, createGumComponent, local_point } from '../src/index'
 import { SvgScene } from '../src/svg-dom'
 import type { GumHandle } from '../src/index'
 
@@ -157,6 +157,7 @@ async function run() {
   check(handles.size === 0 && root.container.listeners.size === 0, 'unmount releases occurrence handles and snapshot listeners')
   container.remove()
   await canvas_contract()
+  await fragment_contract()
   result.textContent = `${logs.join('\n')}\n\n${logs.length} checks passed.`
   result.dataset.status = 'passed'
 }
@@ -246,6 +247,53 @@ async function canvas_contract() {
   check(!!errors.querySelector('ellipse') && !errors.querySelector('[role="alert"]'), 'mounted Gum recovers when failed input is corrected')
   await act(async () => error_root.unmount())
   errors.remove()
+}
+
+// Core evaluation can feed the public DOM component without a custom React root.
+async function fragment_contract() {
+  const container = document.createElement('div'); fixtures.append(container)
+  const output = createRoot(container)
+  const evaluator = new Evaluator()
+  function evaluate(color: string) {
+    const result = layout_element(evaluator.evaluate(`
+      <Page width="320px" height="220px">
+        <Box width="120px" height="90px" clip>
+          <Circle fill="${color}" stroke="none" />
+        </Box>
+      </Page>
+    `))
+    if (result.kind !== 'fragment') throw new Error('Expected an evaluated figure')
+    return result.fragment
+  }
+  try {
+    const first = evaluate('red')
+    await act(async () => output.render(<GumFragment fragment={first} background="white"
+      title="Evaluated figure" idPrefix="evaluated" precision={3} className="figure" style={{ display: 'block' }} />))
+    const svg = container.querySelector('svg')!
+    const circle = svg.querySelector('ellipse')!
+    check(svg.getAttribute('viewBox') === '0 0 320 220' && circle.getAttribute('fill') === 'red',
+      'GumFragment renders evaluated core geometry directly')
+    check(svg.classList.contains('figure') && svg.style.display === 'block'
+      && svg.querySelector('title')?.textContent === 'Evaluated figure', 'fragment display options reach the root SVG')
+    const actual = await raster(new XMLSerializer().serializeToString(svg))
+    const expected = await raster(render_svg(first, { background: 'white', precision: 3 }))
+    check(actual.every((value, index) => value === expected[index]), 'evaluated fragment DOM matches its SVG export pixels')
+    const changed = evaluate('blue')
+    await act(async () => output.render(<GumFragment fragment={changed} />))
+    check(container.querySelector('svg') === svg && svg.querySelector('ellipse') === circle
+      && circle.getAttribute('fill') === 'blue', 'fresh evaluated fragments update existing DOM nodes')
+    check(!svg.querySelector('title') && !svg.hasAttribute('class') && !svg.style.display,
+      'fragment updates clear removed output options')
+    await act(async () => output.render(<>
+      <GumFragment fragment={changed} idPrefix="shared" />
+      <GumFragment fragment={changed} idPrefix="shared" />
+    </>))
+    const ids = [...container.querySelectorAll('[id]')].map(node => node.id)
+    check(ids.length > 0 && new Set(ids).size === ids.length, 'shared fragments have independent clip definitions')
+  } finally {
+    await act(async () => output.unmount())
+    container.remove()
+  }
 }
 
 run().catch(error => {

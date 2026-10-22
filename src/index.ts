@@ -1,5 +1,7 @@
 export { createGumRoot } from './renderer'
 export { Gum } from './canvas'
+export { GumFragment } from './svg-dom'
+export type { GumFragmentProps } from './svg-dom'
 export { GUM, createGumComponent } from './primitives'
 
 export type { GumRoot, GumRootOptions, GumUpdateOptions } from './renderer'

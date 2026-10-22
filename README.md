@@ -59,6 +59,37 @@ Callbacks retain contextual TypeScript types, including Points fields inferred
 from its input records. React elements also work in element-valued props and
 callback results.
 
+## Evaluated code and existing fragments
+
+`GumFragment` renders an immutable core `Fragment` directly as React SVG nodes.
+Use it when your application already evaluates Gum source and owns layout:
+
+```tsx
+import { Evaluator, layout_element } from '@gum-jsx/core'
+import { GumFragment } from '@gum-jsx/react'
+
+const evaluator = new Evaluator()
+const value = evaluator.evaluate('<Page width="320px" height="180px"><Circle /></Page>')
+const result = layout_element(value)
+
+export function Preview() {
+  return result.kind === 'fragment'
+    ? <GumFragment fragment={result.fragment} />
+    : null
+}
+```
+
+It returns an `<svg>` and accepts `background`, `title`, `idPrefix`, `precision`,
+`className`, and `style`. Each mounted figure has its own definition namespace,
+even when the same fragment or prefix appears more than once. Updates reconcile
+the SVG DOM without serializing markup or running another layout pass.
+
+The caller owns evaluation, layout errors, and font loading. Text mode is selected
+during layout; live text uses the fragment's font families, which the host must
+register with the browser. `GumFragment` does not create a Gum React root or add
+interaction bindings. For documents, pass the selected page fragment; for video,
+pass each frame's fragment. Call core `render_svg` separately when exporting.
+
 ## Interaction and retained DOM
 
 `<Gum>` renders fragments as React SVG nodes. Keyed sources retain their groups,
